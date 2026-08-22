@@ -1,0 +1,157 @@
+// niri config — see https://github.com/YaLTeR/niri/wiki for the full
+// reference. This is a minimal but complete "usable desktop" setup,
+// with DankMaterialShell (dms) wired in as the panel/launcher/OSD.
+
+input {
+    keyboard {
+        xkb {
+            layout "pl"
+        }
+    }
+    touchpad {
+        tap
+        natural-scroll
+    }
+    mouse {
+        accel-speed 0.0
+    }
+
+    // focus-follows-mouse
+    // warp-mouse-to-focus
+}
+
+// DMS draws its own bar, so we don't need niri's default one.
+layout {
+    gaps 8
+    center-focused-column "never"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    focus-ring {
+        width 2
+        active-color "#89b4fa"
+        inactive-color "#313244"
+    }
+
+    border {
+        off
+    }
+}
+
+prefer-no-csd
+
+// DMS handles the panel/launcher/notifications/OSD itself and is
+// started as a systemd --user service (see home.nix), so there's no
+// spawn-at-startup entry needed for it here.
+spawn-at-startup "xwayland-satellite"
+
+spawn-at-startup "niriusd"
+
+binds {
+    // ---- apps -----------------------------------------------------
+    Mod+T { spawn "kitty"; }
+    Mod+Q { close-window; }
+    Mod+W { spawn "firefox"; }
+    Mod+E { spawn "dolphin"; }
+    
+
+    Mod+Shift+V { toggle-window-floating; }
+    Mod+P { spawn "nirius" "toggle-follow-mode"; }
+
+    // DMS app launcher (Spotlight)
+    Mod+D { spawn "dms" "ipc" "call" "spotlight" "toggle"; }
+    Mod+Space { spawn "dms" "ipc" "call" "spotlight-bar" "toggle"; }
+
+    // DMS panels
+    Mod+N { spawn "dms" "ipc" "call" "notifications" "toggle"; }
+    Mod+M { spawn "dms" "ipc" "call" "control-center" "toggle"; }
+    Mod+V { spawn "dms" "ipc" "call" "clipboard" "toggle"; }
+    Mod+I { spawn "dms" "ipc" "call" "settings" "toggle"; }
+    
+    Mod+Escape { spawn "dms" "ipc" "call" "powermenu" "toggle"; }
+    XF86PowerOff { spawn "dms" "ipc" "call" "powermenu" "toggle"; }
+
+    Mod+L { spawn "dms" "ipc" "call" "lock" "lock"; }
+
+    // Screenshots (opens DMS's configured screenshot editor)
+    Mod+Shift+S { spawn "dms" "ipc" "call" "niri" "screenshot"; }
+
+    Print { spawn "dms" "ipc" "call" "niri" "screenshot"; }
+    Mod+Print { spawn "dms" "ipc" "call" "niri" "screenshotScreen"; }
+    Mod+Shift+Print { spawn "dms" "ipc" "call" "niri" "screenshotWindow"; }
+
+    // ---- focus / movement ------------------------------------------
+    Mod+Left  { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    
+
+    Mod+Shift+Left  { move-column-left; }
+    Mod+Shift+Right { move-column-right; }
+
+
+    Mod+Down { focus-workspace-down; }
+    Mod+Up   { focus-workspace-up; }
+
+    Mod+Shift+Down { move-column-to-workspace-down; }
+    Mod+Shift+Up   { move-column-to-workspace-up; }
+
+
+    Mod+Page_Up    { focus-window-up; }
+    Mod+Page_Down   { focus-window-down; }
+    
+    Mod+Shift+Page_Up    { move-window-up; }
+    Mod+Shift+Page_Down  { move-window-down; }
+
+    // Mod+Comma  { consume-window-into-column; }
+    // Mod+Period { expel-window-from-column; }
+
+    Mod+R { switch-preset-column-width; }
+    Mod+F { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+
+    // ---- workspaces --------------------------------------------------
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+
+    Mod+Shift+1 { move-window-to-workspace 1; }
+    Mod+Shift+2 { move-window-to-workspace 2; }
+    Mod+Shift+3 { move-window-to-workspace 3; }
+    Mod+Shift+4 { move-window-to-workspace 4; }
+    Mod+Shift+5 { move-window-to-workspace 5; }
+
+    // ---- media / hardware keys, routed through DMS's OSDs ------------
+    XF86AudioRaiseVolume { spawn "dms" "ipc" "call" "audio" "increment" "1"; }
+    XF86AudioLowerVolume { spawn "dms" "ipc" "call" "audio" "decrement" "1"; }
+    XF86AudioMute        { spawn "dms" "ipc" "call" "audio" "mute"; }
+    XF86AudioMicMute     { spawn "dms" "ipc" "call" "mic" "mute"; }
+
+    XF86MonBrightnessUp   { spawn "dms" "ipc" "call" "brightness" "increment" "5"; }
+    XF86MonBrightnessDown { spawn "dms" "ipc" "call" "brightness" "decrement" "5"; }
+
+    XF86AudioPlay { spawn "dms" "ipc" "call" "mpris" "playPause"; }
+    XF86AudioNext { spawn "dms" "ipc" "call" "mpris" "next"; }
+    XF86AudioPrev { spawn "dms" "ipc" "call" "mpris" "previous"; }
+
+    // ---- session -------------------------------------------------
+    // Mod+Shift+E { quit; }
+    // Mod+Shift+P { power-off-monitors; }
+    
+}
+
+window-rule {
+    geometry-corner-radius 10
+}
+
+window-rule {
+    match app-id="steam" 
+    match title=r#"^notificationtoasts_\d+_desktop$"#
+    default-floating-position x=10 y=10 relative-to="bottom-right"
+    open-focused false
+}
