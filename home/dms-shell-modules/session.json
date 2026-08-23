@@ -55,7 +55,7 @@
   "hiddenTrayIds": [],
   "trayItemOrder": [],
   "recentColors": [],
-  "showThirdPartyPlugins": false,
+  "showThirdPartyPlugins": true,
   "pluginBrowserInstalledFirst": false,
   "pluginBrowserSortMode": "default",
   "launchPrefix": "",
@@ -82,11 +82,15 @@
   "notepadLastMode": "",
   "launcherLastMode": "all",
   "launcherLastFileSearchType": "all",
-  "launcherLastQuery": "code",
+  "launcherLastQuery": "",
   "launcherQueryHistory": [
+    "ste",
+    "moni",
     "code",
-    "ki",
-    "sett"
+    "ve",
+    "con",
+    "sett",
+    "ki"
   ],
   "appDrawerLastMode": "apps",
   "niriOverviewLastMode": "apps",

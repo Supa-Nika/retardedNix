@@ -7,7 +7,7 @@
   "matugenContrast": 0,
   "runUserMatugenTemplates": true,
   "matugenTargetMonitor": "",
-  "popupTransparency": 1,
+  "popupTransparency": 0.5,
   "dockTransparency": 1,
   "widgetBackgroundColor": "sch",
   "widgetBackgroundCustomColor": "#6750A4",
@@ -15,7 +15,7 @@
   "widgetColorMode": "default",
   "controlCenterTileColorMode": "primary",
   "buttonColorMode": "primary",
-  "cornerRadius": 16,
+  "cornerRadius": 12,
   "niriLayoutGapsOverride": 4,
   "niriLayoutRadiusOverride": -1,
   "niriLayoutBorderSize": -1,
@@ -57,13 +57,13 @@
   "modalElevationEnabled": true,
   "popoutElevationEnabled": true,
   "barElevationEnabled": false,
-  "blurEnabled": true,
+  "blurEnabled": false,
   "blurForegroundLayers": true,
-  "blurLayerOutlineOpacity": 0.12,
+  "blurLayerOutlineOpacity": 0.4,
   "blurBorderEnabled": true,
   "blurBorderColor": "outline",
   "blurBorderCustomColor": "#ffffff",
-  "blurBorderOpacity": 0.35,
+  "blurBorderOpacity": 1,
   "wallpaperFillMode": "Fill",
   "blurredWallpaperLayer": false,
   "blurWallpaperOnOverview": true,
@@ -592,6 +592,7 @@
     {
       "autoHide": false,
       "autoHideDelay": 250,
+      "barInsetPadding": 4,
       "borderColor": "primary",
       "borderEnabled": true,
       "borderOpacity": 0.18,
@@ -602,11 +603,13 @@
         "clock",
         "weather"
       ],
+      "clickThrough": false,
       "enabled": true,
       "fontScale": 1,
       "gothCornerRadiusOverride": false,
       "gothCornerRadiusValue": 12,
       "gothCornersEnabled": false,
+      "hoverPopouts": false,
       "iconScale": 1,
       "id": "default",
       "innerPadding": 4,
@@ -628,21 +631,19 @@
         "systemTray",
         "clipboard",
         {
-          "id": "spacer",
           "enabled": true,
+          "id": "spacer",
           "size": 70
         },
         "cpuUsage",
         {
-          "id": "gpuTemp",
-          "enabled": true,
-          "selectedGpuIndex": 0,
-          "pciId": "10de:2184"
+          "id": "gpuMonitor",
+          "enabled": true
         },
         "memUsage",
         {
-          "id": "spacer",
           "enabled": true,
+          "id": "spacer",
           "size": 70
         },
         "notificationButton",
@@ -652,21 +653,18 @@
       "screenPreferences": [
         "all"
       ],
+      "shadowColorMode": "default",
+      "shadowIntensity": 100,
+      "shadowOpacity": 60,
       "showOnLastDisplay": true,
       "spacing": 4,
       "squareCorners": false,
       "transparency": 0.01,
       "visible": true,
-      "widgetTransparency": 0.16,
-      "barInsetPadding": 4,
-      "widgetPadding": 8,
       "widgetOutlineEnabled": false,
       "widgetOutlineOpacity": 0.17,
-      "shadowIntensity": 100,
-      "shadowOpacity": 60,
-      "shadowColorMode": "default",
-      "clickThrough": false,
-      "hoverPopouts": false
+      "widgetPadding": 8,
+      "widgetTransparency": 0.16
     }
   ],
   "desktopClockEnabled": false,
@@ -741,11 +739,11 @@
   "desktopWidgetInstances": [],
   "desktopWidgetGroups": [],
   "builtInPluginSettings": {
-    "dms_settings_search": {
-      "trigger": "?"
-    },
     "dms_clipboard_search": {
       "trigger": "cb"
+    },
+    "dms_settings_search": {
+      "trigger": "?"
     }
   },
   "clipboardClickToPaste": false,
