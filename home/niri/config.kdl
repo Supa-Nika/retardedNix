@@ -149,8 +149,14 @@ window-rule {
     geometry-corner-radius 10
 }
 
-// window-rule {
-//     match app-id="steam" title=r#"^notificationtoasts_\d+_desktop$"#
-//     default-floating-position x=10 y=10 relative-to="bottom-right"
-//     open-focused false
-// }
+window-rule {
+    match app-id="firefox$" title="^Picture-in-Picture$"
+
+    default-floating-position x=32 y=32 relative-to="bottom-left"
+}
+
+window-rule {
+    match app-id="steam" title=r#"^notificationtoasts_\d+_desktop$"#
+    default-floating-position x=10 y=10 relative-to="bottom-right"
+    open-focused false
+} 
