@@ -6,6 +6,7 @@ import json
 import socket
 import threading
 import serial
+import traceback
 
 STATE_FILE = os.path.expanduser("~/.local/state/streamdeck/state.json")
 SOCKET_PATH = "/tmp/streamdeck.sock"
@@ -18,22 +19,24 @@ current_state = {
 }
 state_lock = threading.Lock()
 
+# =========================================================
+# MEDIA PLAYERS 
+# =========================================================
+def is_state_changed(active_path: str, active_type: str):
+    """Returns True if CLI sent a command to switch media."""
+    def check():
+        with state_lock:
+            return (current_state["path"] != active_path) or (current_state["type"] != active_type)
+    return check
 
-# =========================================================
-# MEDIA PLAYERS (Skeleton Functions)
-# =========================================================
 def play_video(ser: serial.Serial, file_path: str):
-  playVideo.play(ser, file_path)
-  
-
+    playVideo.play(ser, file_path, should_stop=is_state_changed(file_path, "video"))
 
 def play_gif(ser: serial.Serial, file_path: str):
-  playGif(ser, file_path)
-
+    playGif.play(ser, file_path, should_stop=is_state_changed(file_path, "gif"))
 
 def play_image(ser: serial.Serial, file_path: str):
-  playImage.play(ser, file_path)
-
+    playImage.play(ser, file_path, should_stop=is_state_changed(file_path, "image"))
 
 # =========================================================
 # STATE MANAGEMENT
@@ -109,7 +112,10 @@ def socket_listener():
 # MAIN DISPATCHER & DEVICE HOTPLUG LOOP
 # =========================================================
 def main():
-    # 1. Start the IPC thread so the CLI works even if the device isn't plugged in yet
+    print(f"[Debug] Running from: {__file__}")
+    print(f"[Debug] playGif module: {playGif.__file__}")
+    print(f"[Debug] playGif.play: {playGif.play}")
+    print(f"[Debug] cwd: {os.getcwd()}")
     threading.Thread(target=socket_listener, daemon=True).start()
 
     while True:
@@ -154,6 +160,7 @@ def main():
             print(f"[Device] Disconnected or serial error: {e}")
         except Exception as e:
             print(f"[Device] Unexpected error: {e}")
+            traceback.print_exc()
 
         print("[Device] Device lost. Retrying connection...")
         time.sleep(2)

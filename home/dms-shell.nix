@@ -785,7 +785,7 @@
       doNotDisturb = false;
       doNotDisturbUntil = 0;
       terminalOverride = "";
-      wallpaperPath = "/home/mieciu/nix/home/stuffs/wallpapers/wallpaper.png";
+      wallpaperPath = "/home/mieciu/.local/share/wallpapers/wallpaper.png";
       perMonitorWallpaper = false;
       monitorWallpapers = {};
       perModeWallpaper = false;

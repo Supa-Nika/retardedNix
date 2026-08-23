@@ -20,8 +20,10 @@ pkgs.stdenv.mkDerivation {
   pname = "streamdeck-handler";
   version = "0.1.0";
 
-  src = ./.;
-
+  src = pkgs.lib.cleanSourceWith {
+    src = ./.;
+    filter = name: type: baseNameOf name != "__pycache__";
+  };
   nativeBuildInputs = [ pkgs.makeWrapper ];
 
   installPhase = ''

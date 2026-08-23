@@ -23,7 +23,7 @@ in
       serviceConfig = {
         ExecStart = "${streamdeck-pkg}/bin/streamdeck-daemon";
         Restart = "always";
-        RestartSec = "2s";
+        RestartSec = "5s";
       };
     };
 

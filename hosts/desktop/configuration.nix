@@ -63,7 +63,7 @@ in
 {
   imports = [
     ./hardware-configuration.nix
-    ../../modules/myservice.nix
+    ../../modules/streamDeck.nix
   ];
 
   # ---------------------------------------------------------------------
@@ -313,6 +313,8 @@ in
 
   services.flatpak.enable = true;
 
+  
+
   programs.obs-studio = {
     enable = true;
 
@@ -334,6 +336,7 @@ in
     ];
   };
 
+  services.streamdeck-handler.enable = true;
 
   services.zerotierone = {
     enable = true;
