@@ -59,6 +59,29 @@
     
   ];
 
+    programs.kitty = {
+      enable = true;
+      extraConfig = ''
+        include dank-theme.conf
+        include dank-tabs.conf
+      '';
+    };
+
+    programs.firefox = {
+      enable = true;
+      profiles.dms-profile = {
+        settings = {
+          # 1. Force Firefox to load custom CSS
+          "toolkit.legacyUserProfileCustomizations.stylesheets" = true;
+        };
+
+        # 2. Automatically generates ~/.mozilla/firefox/<profile>/chrome/userChrome.css
+        userChrome = ''
+          @import "file://${config.home.homeDirectory}/.config/dms/firefox/colors.css";
+        '';
+      };
+    };
+  
   home.pointerCursor = {
     gtk.enable = true;
     x11.enable = true;

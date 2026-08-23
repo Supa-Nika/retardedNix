@@ -2,6 +2,15 @@
 // reference. This is a minimal but complete "usable desktop" setup,
 // with DankMaterialShell (dms) wired in as the panel/launcher/OSD.
 
+include "dms/colors.kdl"
+include "dms/binds.kdl"
+include "dms/layout.kdl"
+include "dms/windowrules.kdl"
+include "dms/alttab.kdl"
+include "dms/cursor.kdl"
+include "dms/outputs.kdl"
+include "dms/wpblur.kdl"
+
 input {
     keyboard {
         xkb {
@@ -21,26 +30,6 @@ input {
 }
 
 // DMS draws its own bar, so we don't need niri's default one.
-layout {
-    gaps 8
-    center-focused-column "never"
-
-    preset-column-widths {
-        proportion 0.33333
-        proportion 0.5
-        proportion 0.66667
-    }
-
-    focus-ring {
-        width 2
-        active-color "#89b4fa"
-        inactive-color "#313244"
-    }
-
-    border {
-        off
-    }
-}
 
 prefer-no-csd
 
