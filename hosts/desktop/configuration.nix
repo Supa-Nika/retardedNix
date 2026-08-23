@@ -309,11 +309,14 @@ in
     v4l-utils
     psmisc
     pulseaudio
+    atuin
   ];
 
   services.flatpak.enable = true;
 
-  
+  # programs.bash.interactiveShellInit = ''
+  #   eval "$(${pkgs.atuin}/bin/atuin init bash)"
+  # '';
 
   programs.obs-studio = {
     enable = true;
