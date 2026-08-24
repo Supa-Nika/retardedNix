@@ -1,98 +1,63 @@
-import cv2, serial, time, struct, os, sys, numpy
+import cv2, time, os
+from . import sendJpegOverUdp
 
-def play(ser: serial.Serial, video_path: str, should_stop=lambda: False, ack_event=None):
+def play(video_path: str, quality: int, fps: int, should_stop=lambda: False):
     if not os.path.exists(video_path):
-        print(f"Error: Video file '{video_path}' not found!")
+        print(f"[Video] Error: File '{video_path}' not found!")
         return
 
     cap = cv2.VideoCapture(video_path, cv2.CAP_FFMPEG)
     if not cap.isOpened(): 
-        print(f"Error: Could not open video '{video_path}'")
+        print(f"[Video] Error: Could not open '{video_path}'")
         return
 
-    video_fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
-    ser.reset_input_buffer()
-    print("Starting real-time video stream...")
+    # Cap maximum FPS to 20 so ESP32 decoding isn't overwhelmed
+    native_fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+    target_fps = min(native_fps, fps) 
+    frame_delay = 1.0 / target_fps
+    
+    print(f"[Video] Starting UDP stream at {target_fps} FPS...")
 
-    start_time = time.time()
-    frame_idx = 0
+    TARGET_W, TARGET_H = 320, 240
+    TARGET_RATIO = TARGET_W / TARGET_H
 
     try:
         while cap.isOpened():
-            # Check for daemon state interrupt
             if should_stop():
                 print("[Video] Interrupt received, stopping stream...")
                 break
 
-            elapsed = time.time() - start_time
-            expected_frame = int(elapsed * video_fps)
+            loop_start = time.time()
 
-            # 1. RUNNING TOO FAST: Script is ahead of framerate
-            if frame_idx > expected_frame:
-                time.sleep(0.001)
-                continue
-
-            # 2. LAGGING: Drop frames to catch up
-            if frame_idx < expected_frame:
-                ret = cap.grab() 
-                if not ret:
-                    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                    start_time = time.time()
-                    frame_idx = 0
-                else:
-                    frame_idx += 1
-                continue
-            
-            # 3. ON TIME: Read actual frame
             ret, frame = cap.read()
             if not ret:
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                start_time = time.time()
-                frame_idx = 0
                 continue
-            
-            frame_idx += 1
-            
-            # Center Crop to 4:3
+
+            # Crop to 320x240 aspect ratio
             h, w = frame.shape[:2]
-            target_ratio = 320 / 240
             frame_ratio = w / h
 
-            if frame_ratio > target_ratio: 
-                new_w = int(h * target_ratio)
+            if frame_ratio > TARGET_RATIO: 
+                new_w = int(h * TARGET_RATIO)
                 offset = (w - new_w) // 2
                 frame = frame[:, offset:offset+new_w]
-            elif frame_ratio < target_ratio: 
-                new_h = int(w / target_ratio)
+            elif frame_ratio < TARGET_RATIO: 
+                new_h = int(w / TARGET_RATIO)
                 offset = (h - new_h) // 2
                 frame = frame[offset:offset+new_h, :]
 
-            frame = cv2.resize(frame, (320, 240))
+            frame = cv2.resize(frame, (TARGET_W, TARGET_H))
 
-            # Controls
-            CONTRAST   = 1.2   
-            BRIGHTNESS = -5    
-            SATURATION = 1.5   
-            
-            frame = cv2.convertScaleAbs(frame, alpha=CONTRAST, beta=BRIGHTNESS)
+            # Encode with JPEG quality 30 (smaller payload = zero packet drops)
+            _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, quality])
+            sendJpegOverUdp.send(jpeg.tobytes())
 
-            if SATURATION != 1.0:
-                hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV).astype("float32")
-                (h, s, v) = cv2.split(hsv)
-                s = numpy.clip(s * SATURATION, 0, 255)
-                hsv = cv2.merge([h, s, v]).astype("uint8")
-                frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-            
-            # Encode and transmit over serial
-            _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 40])
-            data = jpeg.tobytes()
-
-            if ack_event is not None:
-                ack_event.clear()
-            ser.write(struct.pack('>I', len(data)) + data)
-            if ack_event is not None:
-                if not ack_event.wait(timeout=1.0):
-                    print("[Video] ACK timeout, continuing anyway")
+            # Maintain constant framerate
+            elapsed = time.time() - loop_start
+            sleep_time = frame_delay - elapsed
+            if sleep_time > 0:
+                time.sleep(sleep_time)
 
     finally:
         cap.release()

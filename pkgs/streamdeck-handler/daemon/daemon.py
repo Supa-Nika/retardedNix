@@ -1,66 +1,85 @@
 import modules as interact
 
 import os
-import subprocess
-import sys
 import time
 import json
 import socket
 import threading
 import serial
 import traceback
-import pyautogui
 
 STATE_FILE = os.path.expanduser("~/.local/state/streamdeck/state.json")
 SOCKET_PATH = "/tmp/streamdeck.sock"
 SERIAL_PORT = "/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0"
 
+# Default settings per media type
+DEFAULT_QUALITY = {
+    "image": 80,  # Static image: higher quality since it renders once
+    "gif": 50,    # GIF: balanced quality
+    "video": 30,  # Video: lower quality for fast UDP streaming
+}
+
+DEFAULT_FPS = {
+    "image": 0,
+    "gif": 15,
+    "video": 20,
+}
+
 # Global state & lock for thread-safe updates
 current_state = {
     "path": "",
-    "type": "image"  # Options: "video", "gif", "image"
+    "type": "image",  # Options: "video", "gif", "image"
+    "quality": 30,
+    "fps": 0
 }
 state_lock = threading.Lock()
-
-# Map matrix keypad characters directly to PC Numpad keys
-
-# KEYCODES = {  # linux/input-event-codes.h
-#     '1': 79, '2': 80, '3': 81, '4': 75,
-#     '5': 76, '6': 77, '7': 71, '8': 72,
-# }
-
-
-
-# =========================================================
-# KEYPAD EVENT HANDLER & SERIAL READER
-# =========================================================
-
-
 
 # =========================================================
 # MEDIA PLAYERS 
 # =========================================================
-def is_state_changed(active_path: str, active_type: str):
-    """Returns True if CLI sent a command to switch media."""
+def is_state_changed(active_path: str, active_type: str, active_quality: int, active_fps: int):
+    """Returns True if CLI sent new settings or device was unplugged."""
     def check():
+        if not os.path.exists(SERIAL_PORT):
+            return True
+            
         with state_lock:
-            return (current_state["path"] != active_path) or (current_state["type"] != active_type)
+            return (
+                current_state["path"] != active_path or
+                current_state["type"] != active_type or
+                current_state["quality"] != active_quality or
+                current_state["fps"] != active_fps
+            )
     return check
 
-def play_video(ser, file_path):
-    interact.playVideo.play(ser, file_path, should_stop=is_state_changed(file_path, "video"))
+def play_video(file_path, quality, fps):
+    interact.playVideo.play(
+        file_path, 
+        quality=quality, 
+        fps=fps, 
+        should_stop=is_state_changed(file_path, "video", quality, fps)
+    )
 
-def play_gif(ser, file_path):
-    interact.playGif.play(ser, file_path, should_stop=is_state_changed(file_path, "gif"))
+def play_gif(file_path, quality):
+    interact.playGif.play(
+        file_path, 
+        quality=quality, 
+        should_stop=is_state_changed(file_path, "gif", quality, 0) #gifs default speed, wont change
+    )
 
-def play_image(ser, file_path):
-    interact.playImage.play(ser, file_path, should_stop=is_state_changed(file_path, "image"))
+def play_image(file_path, quality):
+    # FPS is ignored for static images
+    interact.playImage.play(
+        file_path, 
+        quality=quality, 
+        should_stop=is_state_changed(file_path, "image", quality, 0)
+    )
 
 # =========================================================
 # STATE MANAGEMENT
 # =========================================================
 def load_state():
-    """Reads saved path and type from disk on startup/device connection."""
+    """Reads saved path, type, quality, and fps from disk."""
     global current_state
     if os.path.exists(STATE_FILE):
         try:
@@ -69,6 +88,8 @@ def load_state():
                 with state_lock:
                     current_state["path"] = data.get("path", "")
                     current_state["type"] = data.get("type", "image")
+                    current_state["quality"] = data.get("quality", 30)
+                    current_state["fps"] = data.get("fps", 20)
                 print(f"[State] Loaded from file: {current_state}")
         except Exception as e:
             print(f"[State] Error loading state.json: {e}")
@@ -76,13 +97,18 @@ def load_state():
         print("[State] No previous state file found. Using defaults.")
 
 
-def save_state(path: str, media_type: str):
+def save_state(path: str, media_type: str, quality: int, fps: int):
     """Persists current playing configuration to state.json."""
     os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
     try:
         with open(STATE_FILE, "w") as f:
-            json.dump({"path": path, "type": media_type}, f, indent=2)
-        print(f"[State] Saved to file: {path} ({media_type})")
+            json.dump({
+                "path": path, 
+                "type": media_type,
+                "quality": quality,
+                "fps": fps
+            }, f, indent=2)
+        print(f"[State] Saved to file: {path} ({media_type}, q={quality}, fps={fps})")
     except Exception as e:
         print(f"[State] Failed to write state.json: {e}")
 
@@ -106,32 +132,45 @@ def socket_listener():
 
     while True:
         conn, _ = server.accept()
-        raw_msg = conn.recv(1024).decode('utf-8').strip()
-        if raw_msg:
-            # Expecting commands formatted like: "video /path/to/file.mp4"
-            parts = raw_msg.split(" ", 1)
-            media_type = parts[0].lower()
-            path = parts[1] if len(parts) > 1 else ""
+        try:
+            # Inside socket_listener() in daemon.py
+            raw_msg = conn.recv(1024).decode('utf-8').strip()
+            if raw_msg:
+                parts = raw_msg.split(" ", 3)
+                if len(parts) == 4:
+                    media_type = parts[0].lower()
+                    
+                    try:
+                        quality = int(parts[1])
+                        fps = int(parts[2])
+                    except ValueError:
+                        quality, fps = 0, 0
 
-            if media_type in ["video", "gif", "image"] and os.path.exists(path):
-                with state_lock:
-                    current_state["path"] = path
-                    current_state["type"] = media_type
+                    path = parts[3]
 
-                save_state(path, media_type)
-                conn.send(b"OK: State updated\n")
-            else:
-                conn.send(b"ERROR: Invalid arguments or file path\n")
+                    if media_type in ["video", "gif", "image"] and os.path.exists(path):
+                        # Fallback to type-specific defaults if 0 or invalid
+                        resolved_quality = quality if quality > 0 else DEFAULT_QUALITY.get(media_type, 30)
+                        resolved_fps = fps if fps > 0 else DEFAULT_FPS.get(media_type, 20)
 
-        conn.close()
+                        with state_lock:
+                            current_state["path"] = path
+                            current_state["type"] = media_type
+                            current_state["quality"] = resolved_quality
+                            current_state["fps"] = resolved_fps
+
+                        save_state(path, media_type, resolved_quality, resolved_fps)
+                        conn.send(b"OK: State updated\n")
+        except Exception as e:
+            print(f"[IPC] Error handling connection: {e}")
+        finally:
+            conn.close()
 
 # =========================================================
 # MAIN DISPATCHER & DEVICE HOTPLUG LOOP
 # =========================================================
 def main():
     print(f"[Debug] Running from: {__file__}")
-    print(f"[Debug] playGif module: {interact.playGif.__file__}")
-    print(f"[Debug] playGif.play: {interact.playGif.play}")
     print(f"[Debug] cwd: {os.getcwd()}")
     threading.Thread(target=socket_listener, daemon=True).start()
 
@@ -148,14 +187,11 @@ def main():
         load_state()
 
         try:
-            ser = serial.Serial(SERIAL_PORT, 3000000, timeout=2)
-            time.sleep(2)
-            ser.reset_input_buffer()
-
-            interact.ack_event.clear() 
+            ser = serial.Serial(SERIAL_PORT, 115200, timeout=2)
+            time.sleep(1)
 
             # Start background serial thread for non-blocking keypad handling
-            serial_thread = threading.Thread(target=interact.read_serial, args=(ser,), daemon=True)
+            serial_thread = threading.Thread(target=interact.readSerial.read_serial, args=(ser,), daemon=True)
             serial_thread.start()
 
             print("[Device] Serial port opened. Starting main render loop.")
@@ -165,6 +201,8 @@ def main():
                 with state_lock:
                     path = current_state["path"]
                     media_type = current_state["type"]
+                    quality = current_state["quality"]
+                    fps = current_state["fps"]
 
                 if not path or not os.path.exists(path):
                     time.sleep(0.2)
@@ -172,11 +210,11 @@ def main():
 
                 # Route execution based on current media type state
                 if media_type == "video":
-                    play_video(ser, path)
+                    play_video(path, quality, fps)
                 elif media_type == "gif":
-                    play_gif(ser, path)
+                    play_gif(path, quality)
                 elif media_type == "image":
-                    play_image(ser, path)
+                    play_image(path, quality)
 
             ser.close()
 
