@@ -1,4 +1,5 @@
-import playImage, playGif, playVideo
+import modules as interact
+
 import os
 import subprocess
 import sys
@@ -9,8 +10,6 @@ import threading
 import serial
 import traceback
 import pyautogui
-
-
 
 STATE_FILE = os.path.expanduser("~/.local/state/streamdeck/state.json")
 SOCKET_PATH = "/tmp/streamdeck.sock"
@@ -30,57 +29,13 @@ state_lock = threading.Lock()
 #     '5': 76, '6': 77, '7': 71, '8': 72,
 # }
 
-KEYCODES = {
-    '1': 164,  # KEY_PLAYPAUSE
-    '2': 163,        # KEY_NEXTSONG
-    '3': 165,    # KEY_PREVIOUSSONG
-    '4': 166,        # KEY_STOPCD
-    '5': 113,        # KEY_MUTE
-    '6': 114, # KEY_VOLUMEDOWN
-    '7': 115,   # KEY_VOLUMEUP
-    '8': 208,# KEY_FASTFORWARD
-}
+
 
 # =========================================================
 # KEYPAD EVENT HANDLER & SERIAL READER
 # =========================================================
 
-def handle_key_press(key: str):
-    print(f"[Keypad] Pressed: {key}", flush=True)
-    if key in KEYCODES:
-        code = KEYCODES[key]
-        subprocess.run(["ydotool", "key", f"{code}:1", f"{code}:0"], check=False)
 
-
-ack_event = threading.Event()
-
-def read_serial(ser: serial.Serial):
-    """Sole owner of ser.read(). Routes 'R' bytes to ack_event, K: lines to keypad handler."""
-    buffer = bytearray()
-    while ser and ser.is_open:
-        try:
-            b = ser.read(1)  # blocks up to ser.timeout (2s), returns b'' on timeout
-        except Exception as e:
-            print(f"[Serial Read] Error: {e}")
-            break
-
-        if not b:
-            continue
-
-        if b == b'R':
-            ack_event.set()
-            continue
-
-        buffer += b
-        if b == b'\n':
-            line = bytes(buffer).strip()
-            buffer = bytearray()
-            if line.startswith(b"K:"):
-                key = line[2:].decode(errors="ignore")
-                try:
-                    handle_key_press(key)
-                except Exception as e:
-                    print(f"[Keypad] handle_key_press failed: {e}")
 
 # =========================================================
 # MEDIA PLAYERS 
@@ -93,13 +48,13 @@ def is_state_changed(active_path: str, active_type: str):
     return check
 
 def play_video(ser, file_path):
-    playVideo.play(ser, file_path, should_stop=is_state_changed(file_path, "video"), ack_event=ack_event)
+    interact.playVideo.play(ser, file_path, should_stop=is_state_changed(file_path, "video"))
 
 def play_gif(ser, file_path):
-    playGif.play(ser, file_path, should_stop=is_state_changed(file_path, "gif"), ack_event=ack_event)
+    interact.playGif.play(ser, file_path, should_stop=is_state_changed(file_path, "gif"))
 
 def play_image(ser, file_path):
-    playImage.play(ser, file_path, should_stop=is_state_changed(file_path, "image"), ack_event=ack_event)
+    interact.playImage.play(ser, file_path, should_stop=is_state_changed(file_path, "image"))
 
 # =========================================================
 # STATE MANAGEMENT
@@ -175,8 +130,8 @@ def socket_listener():
 # =========================================================
 def main():
     print(f"[Debug] Running from: {__file__}")
-    print(f"[Debug] playGif module: {playGif.__file__}")
-    print(f"[Debug] playGif.play: {playGif.play}")
+    print(f"[Debug] playGif module: {interact.playGif.__file__}")
+    print(f"[Debug] playGif.play: {interact.playGif.play}")
     print(f"[Debug] cwd: {os.getcwd()}")
     threading.Thread(target=socket_listener, daemon=True).start()
 
@@ -197,10 +152,10 @@ def main():
             time.sleep(2)
             ser.reset_input_buffer()
 
-            ack_event.clear() 
+            interact.ack_event.clear() 
 
             # Start background serial thread for non-blocking keypad handling
-            serial_thread = threading.Thread(target=read_serial, args=(ser,), daemon=True)
+            serial_thread = threading.Thread(target=interact.read_serial, args=(ser,), daemon=True)
             serial_thread.start()
 
             print("[Device] Serial port opened. Starting main render loop.")
