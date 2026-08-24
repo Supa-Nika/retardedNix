@@ -1,5 +1,6 @@
 import playImage, playGif, playVideo
 import os
+import subprocess
 import sys
 import time
 import json
@@ -7,6 +8,9 @@ import socket
 import threading
 import serial
 import traceback
+import pyautogui
+
+
 
 STATE_FILE = os.path.expanduser("~/.local/state/streamdeck/state.json")
 SOCKET_PATH = "/tmp/streamdeck.sock"
@@ -19,6 +23,65 @@ current_state = {
 }
 state_lock = threading.Lock()
 
+# Map matrix keypad characters directly to PC Numpad keys
+
+# KEYCODES = {  # linux/input-event-codes.h
+#     '1': 79, '2': 80, '3': 81, '4': 75,
+#     '5': 76, '6': 77, '7': 71, '8': 72,
+# }
+
+KEYCODES = {
+    '1': 164,  # KEY_PLAYPAUSE
+    '2': 163,        # KEY_NEXTSONG
+    '3': 165,    # KEY_PREVIOUSSONG
+    '4': 166,        # KEY_STOPCD
+    '5': 113,        # KEY_MUTE
+    '6': 114, # KEY_VOLUMEDOWN
+    '7': 115,   # KEY_VOLUMEUP
+    '8': 208,# KEY_FASTFORWARD
+}
+
+# =========================================================
+# KEYPAD EVENT HANDLER & SERIAL READER
+# =========================================================
+
+def handle_key_press(key: str):
+    print(f"[Keypad] Pressed: {key}", flush=True)
+    if key in KEYCODES:
+        code = KEYCODES[key]
+        subprocess.run(["ydotool", "key", f"{code}:1", f"{code}:0"], check=False)
+
+
+ack_event = threading.Event()
+
+def read_serial(ser: serial.Serial):
+    """Sole owner of ser.read(). Routes 'R' bytes to ack_event, K: lines to keypad handler."""
+    buffer = bytearray()
+    while ser and ser.is_open:
+        try:
+            b = ser.read(1)  # blocks up to ser.timeout (2s), returns b'' on timeout
+        except Exception as e:
+            print(f"[Serial Read] Error: {e}")
+            break
+
+        if not b:
+            continue
+
+        if b == b'R':
+            ack_event.set()
+            continue
+
+        buffer += b
+        if b == b'\n':
+            line = bytes(buffer).strip()
+            buffer = bytearray()
+            if line.startswith(b"K:"):
+                key = line[2:].decode(errors="ignore")
+                try:
+                    handle_key_press(key)
+                except Exception as e:
+                    print(f"[Keypad] handle_key_press failed: {e}")
+
 # =========================================================
 # MEDIA PLAYERS 
 # =========================================================
@@ -29,14 +92,14 @@ def is_state_changed(active_path: str, active_type: str):
             return (current_state["path"] != active_path) or (current_state["type"] != active_type)
     return check
 
-def play_video(ser: serial.Serial, file_path: str):
-    playVideo.play(ser, file_path, should_stop=is_state_changed(file_path, "video"))
+def play_video(ser, file_path):
+    playVideo.play(ser, file_path, should_stop=is_state_changed(file_path, "video"), ack_event=ack_event)
 
-def play_gif(ser: serial.Serial, file_path: str):
-    playGif.play(ser, file_path, should_stop=is_state_changed(file_path, "gif"))
+def play_gif(ser, file_path):
+    playGif.play(ser, file_path, should_stop=is_state_changed(file_path, "gif"), ack_event=ack_event)
 
-def play_image(ser: serial.Serial, file_path: str):
-    playImage.play(ser, file_path, should_stop=is_state_changed(file_path, "image"))
+def play_image(ser, file_path):
+    playImage.play(ser, file_path, should_stop=is_state_changed(file_path, "image"), ack_event=ack_event)
 
 # =========================================================
 # STATE MANAGEMENT
@@ -107,7 +170,6 @@ def socket_listener():
 
         conn.close()
 
-
 # =========================================================
 # MAIN DISPATCHER & DEVICE HOTPLUG LOOP
 # =========================================================
@@ -134,6 +196,13 @@ def main():
             ser = serial.Serial(SERIAL_PORT, 3000000, timeout=2)
             time.sleep(2)
             ser.reset_input_buffer()
+
+            ack_event.clear() 
+
+            # Start background serial thread for non-blocking keypad handling
+            serial_thread = threading.Thread(target=read_serial, args=(ser,), daemon=True)
+            serial_thread.start()
+
             print("[Device] Serial port opened. Starting main render loop.")
 
             # Hardware execution loop

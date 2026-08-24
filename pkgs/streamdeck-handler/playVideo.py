@@ -1,6 +1,6 @@
 import cv2, serial, time, struct, os, sys, numpy
 
-def play(ser: serial.Serial, video_path: str, should_stop=lambda: False):
+def play(ser: serial.Serial, video_path: str, should_stop=lambda: False, ack_event=None):
     if not os.path.exists(video_path):
         print(f"Error: Video file '{video_path}' not found!")
         return
@@ -87,8 +87,12 @@ def play(ser: serial.Serial, video_path: str, should_stop=lambda: False):
             _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 40])
             data = jpeg.tobytes()
 
+            if ack_event is not None:
+                ack_event.clear()
             ser.write(struct.pack('>I', len(data)) + data)
-            ser.read(1) # Wait for ACK byte
+            if ack_event is not None:
+                if not ack_event.wait(timeout=1.0):
+                    print("[Video] ACK timeout, continuing anyway")
 
     finally:
         cap.release()

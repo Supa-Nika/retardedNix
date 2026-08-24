@@ -1,7 +1,7 @@
 import cv2, serial, time, struct, os, sys, numpy
 from PIL import Image, ImageSequence
 
-def play(ser: serial.Serial, gif_path: str, should_stop=lambda: False):
+def play(ser: serial.Serial, gif_path: str, should_stop=lambda: False, ack_event=None):
     if not os.path.exists(gif_path):
         print(f"Error: GIF file '{gif_path}' not found!")
         return
@@ -57,8 +57,13 @@ def play(ser: serial.Serial, gif_path: str, should_stop=lambda: False):
                 return  # Instantly yield back to main daemon loop
 
             frame_start = time.time()
+
+            if ack_event is not None:
+                ack_event.clear()
             ser.write(payload)
-            ser.read(1) # Wait for ACK byte
+            if ack_event is not None:
+                if not ack_event.wait(timeout=1.0):
+                    print("[GIF] ACK timeout, continuing anyway")
 
             elapsed = time.time() - frame_start
             sleep_time = duration - elapsed

@@ -310,6 +310,7 @@ in
     psmisc
     pulseaudio
     atuin
+    ydotool
   ];
 
   services.flatpak.enable = true;

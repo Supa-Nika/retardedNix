@@ -6,6 +6,7 @@ let
     pyserial
     numpy
     pillow
+    pyautogui
   ]);
 
   gstPluginPath = pkgs.lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" [
@@ -33,7 +34,7 @@ pkgs.stdenv.mkDerivation {
     # 1. Daemon binary
     makeWrapper ${pythonEnv}/bin/python $out/bin/streamdeck-daemon \
       --add-flags "$out/share/streamdeck-handler/daemon.py" \
-      --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.ffmpeg ]} \
+      --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.ffmpeg pkgs.ydotool ]} \
       --set GST_PLUGIN_SYSTEM_PATH_1_0 "${gstPluginPath}"
 
     # 2. CLI binary

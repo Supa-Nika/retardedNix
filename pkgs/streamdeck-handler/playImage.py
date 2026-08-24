@@ -1,6 +1,6 @@
 import cv2, serial, time, struct, os, sys, numpy
 
-def play(ser: serial.Serial, image_path: str, should_stop=lambda: False):
+def play(ser: serial.Serial, image_path: str, should_stop=lambda: False, ack_event=None):
     if not os.path.exists(image_path):
         print(f"Error: Image file '{image_path}' not found!")
         return
@@ -45,9 +45,10 @@ def play(ser: serial.Serial, image_path: str, should_stop=lambda: False):
     data = jpeg.tobytes()
 
     ser.reset_input_buffer()
-    ser.write(struct.pack('>I', len(data)) + data)
-    ser.read(1) # ACK byte
 
-    # Hold state and check for CLI cancellation
-    while not should_stop():
-        time.sleep(0.1)
+    if ack_event is not None:
+        ack_event.clear()
+    ser.write(struct.pack('>I', len(data)) + data)
+    if ack_event is not None:
+        if not ack_event.wait(timeout=1.0):
+            print("[Image] ACK timeout, continuing anyway")
