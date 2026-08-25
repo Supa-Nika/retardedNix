@@ -234,6 +234,7 @@ in
     localNetworkGameTransfers.openFirewall = true; # Open ports for local LAN downloads (optional)
   };
 
+  programs.gamemode.enable = true;
 
   # ---------------------------------------------------------------------
   # Fonts (DMS uses Material Symbols + a normal UI font; add fallbacks)
@@ -302,6 +303,7 @@ in
     beammp-launcher
     zerotierone
     steam-run
+    gamescope
     pavucontrol
     jdk25
     awww
@@ -313,6 +315,7 @@ in
     ydotool
   ];
 
+  
   services.flatpak.enable = true;
 
   # programs.bash.interactiveShellInit = ''
