@@ -11,6 +11,12 @@ include "dms/cursor.kdl"
 include "dms/outputs.kdl"
 include "dms/wpblur.kdl"
 
+output "HDMI-A-1" {
+    // Replace "HDMI-A-1" with your connector name from `niri msg outputs`
+    // Use the exact resolution and rate reported by `niri msg outputs`
+    mode "1920x1080@75.001"
+}
+
 input {
     keyboard {
         xkb {
