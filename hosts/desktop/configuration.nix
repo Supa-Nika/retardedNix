@@ -94,12 +94,12 @@ in
   # Load the module on boot
   boot.kernelModules = [
     "v4l2loopback"
+    "i2c-dev"
   ];
 
   # Optional: Module options to ensure compatibility with Chromium/WebRTC applications
   boot.extraModprobeConfig = ''
     options v4l2loopback devices=2 video_nr=10,11 card_label="DroidCam,OBS Virtual Camera" exclusive_caps=1,1
-    blacklist i2c_nvidia_gpu
   '';
 
   # Ensure standard filesystem drivers are available if needed (e.g., ntfs, exfat)
@@ -139,7 +139,7 @@ in
   users.users.${username} = {
     isNormalUser = true;
     description = username;
-    extraGroups = [ "wheel" "networkmanager" "video" "audio" "input" "dialout" "uucp"];
+    extraGroups = [ "wheel" "networkmanager" "video" "audio" "input" "dialout" "uucp" "i2c"];
     shell = pkgs.bash;
   };
 
@@ -208,7 +208,8 @@ in
     enable = true;
     enable32Bit = true; # Steam/Proton, 32-bit games
   };
-
+  hardware.i2c.enable = true;
+  
   services.xserver.videoDrivers = [ "nvidia" ];
 
   hardware.nvidia = {
@@ -313,6 +314,8 @@ in
     pulseaudio
     atuin
     ydotool
+    # brightnessctl
+    ddcutil
   ];
 
   
