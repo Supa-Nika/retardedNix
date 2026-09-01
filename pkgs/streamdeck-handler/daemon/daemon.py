@@ -60,11 +60,11 @@ def play_video(file_path, quality, fps):
         should_stop=is_state_changed(file_path, "video", quality, fps)
     )
 
-def play_gif(file_path, quality):
+def play_gif(file_path, quality, fps):
     interact.playGif.play(
         file_path, 
         quality=quality, 
-        should_stop=is_state_changed(file_path, "gif", quality, 0) #gifs default speed, wont change
+        should_stop=is_state_changed(file_path, "gif", quality, fps)
     )
 
 def play_image(file_path, quality):
@@ -212,7 +212,7 @@ def main():
                 if media_type == "video":
                     play_video(path, quality, fps)
                 elif media_type == "gif":
-                    play_gif(path, quality)
+                    play_gif(path, quality, fps)
                 elif media_type == "image":
                     play_image(path, quality)
 
