@@ -8,15 +8,17 @@ SOCKET_PATH = "/tmp/streamdeck.sock"
 
 def send_to_daemon(media_type: str, file_path: str, quality: int, fps: int):
     """Formats payload and transmits command to daemon via Unix socket."""
-    abs_path = os.path.abspath(file_path)
-
-    if not os.path.exists(abs_path):
-        print(f"Error: File '{abs_path}' does not exist.")
-        sys.exit(1)
+    if media_type == "yt":
+        target = file_path  # URLs pass through untouched
+    else:
+        target = os.path.abspath(file_path)
+        if not os.path.exists(target):
+            print(f"Error: File '{target}' does not exist.")
+            sys.exit(1)
 
     # Format: "video <quality> <fps> <abs_path>"
-    payload = f"{media_type} {quality} {fps} {abs_path}"
-
+    payload = f"{media_type} {quality} {fps} {target}"
+        
     try:
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.connect(SOCKET_PATH)
@@ -80,6 +82,13 @@ def main():
         metavar="PATH",
         help="Path to the image file (not gif)",
     )
+    group.add_argument(
+        "--play-yt",
+        type=str,
+        metavar="PATH",
+        help="Link to the yt video",
+    )
+
 
     args = parser.parse_args()
 
@@ -90,6 +99,8 @@ def main():
     elif args.play_img:
         # FPS passed as 0/default since daemon ignores it for images
         send_to_daemon("image", args.play_img, args.quality, 0)
+    elif args.play_yt:                                              
+        send_to_daemon("yt", args.play_yt, args.quality, args.fps)
     else:
         parser.print_help()
 

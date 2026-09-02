@@ -14,21 +14,23 @@ SERIAL_PORT = "/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0"
 
 # Default settings per media type
 DEFAULT_QUALITY = {
-    "image": 80,  # Static image: higher quality since it renders once
-    "gif": 50,    # GIF: balanced quality
+    "image": 100,  # Static image: full quality since it renders once
+    "gif": 100,    # GIF: full quality
     "video": 30,  # Video: lower quality for fast UDP streaming
+    "yt": 30
 }
 
 DEFAULT_FPS = {
     "image": 0,
     "gif": 15,
     "video": 20,
+    "yt": 20
 }
 
 # Global state & lock for thread-safe updates
 current_state = {
     "path": "",
-    "type": "image",  # Options: "video", "gif", "image"
+    "type": "image",  # Options: "video", "gif", "image" "yt"
     "quality": 30,
     "fps": 0
 }
@@ -74,6 +76,15 @@ def play_image(file_path, quality):
         quality=quality, 
         should_stop=is_state_changed(file_path, "image", quality, 0)
     )
+
+def play_yt(file_path, quality, fps):
+    interact.playYT.play(
+        file_path, 
+        quality=quality, 
+        fps=fps, 
+        should_stop=is_state_changed(file_path, "yt", quality, fps)
+    )
+
 
 # =========================================================
 # STATE MANAGEMENT
@@ -148,7 +159,8 @@ def socket_listener():
 
                     path = parts[3]
 
-                    if media_type in ["video", "gif", "image"] and os.path.exists(path):
+                    path_ok = os.path.exists(path) if media_type != "yt" else path.startswith("http")
+                    if media_type in ["video", "gif", "image", "yt"] and path_ok:
                         # Fallback to type-specific defaults if 0 or invalid
                         resolved_quality = quality if quality > 0 else DEFAULT_QUALITY.get(media_type, 30)
                         resolved_fps = fps if fps > 0 else DEFAULT_FPS.get(media_type, 20)
@@ -204,7 +216,10 @@ def main():
                     quality = current_state["quality"]
                     fps = current_state["fps"]
 
-                if not path or not os.path.exists(path):
+                if not path:
+                    time.sleep(0.2)
+                    continue
+                if media_type != "yt" and not os.path.exists(path):
                     time.sleep(0.2)
                     continue
 
@@ -215,6 +230,8 @@ def main():
                     play_gif(path, quality, fps)
                 elif media_type == "image":
                     play_image(path, quality)
+                elif media_type == "yt":
+                    play_yt(path, quality, fps)
 
             ser.close()
 
