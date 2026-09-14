@@ -84,7 +84,10 @@
     xwayland
     parted
     xorriso
-    ventoy
+  ];
+
+  nixpkgs.config.permittedInsecurePackages = [
+    "ventoy-1.1.12"
   ];
 
   services.flatpak.enable = true;
