@@ -10,6 +10,7 @@
     ../../modules/obs.nix
     ../../modules/networking.nix
     ../../modules/streamDeck.nix
+    ../../modules/waydroid.nix
   ];
 
   time.timeZone = "Europe/Warsaw";
