@@ -1,5 +1,8 @@
 { config, pkgs, username, ... }:
 
+let
+  qemuFresh = import ../../pkgs/qemu-fresh.nix { inherit pkgs; }; 
+in
 {
   imports = [
     ./hardware-configuration.nix
@@ -85,6 +88,10 @@
     xwayland
     parted
     xorriso
+    nodejs_26
+    vulkan-tools
+    mesa-demos
+    qemuFresh # remember to update later when nixpkgs catches up
   ];
 
   nixpkgs.config.permittedInsecurePackages = [

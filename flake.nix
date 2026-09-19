@@ -51,5 +51,10 @@
           }
         ];
       };
+
+      nixosConfigurations.waydroid-vm = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [ ./hosts/waydroid-vm/configuration.nix ];
+      };
     };
 }

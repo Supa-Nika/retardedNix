@@ -1,22 +1,34 @@
 { pkgs, ... }:
 
 {
-  # 1. Enable Waydroid container daemon
   virtualisation.waydroid.enable = true;
 
-  # 2. Add Mesa and virglrenderer packages for Vulkan acceleration
-  hardware.graphics.extraPackages = with pkgs; [
-    virglrenderer
-    mesa.drivers
+  # Enable IP forwarding and trust the bridge interface
+  boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
+  networking.firewall.trustedInterfaces = [ "waydroid0" ];
+
+  # Explicitly load legacy iptables kernel modules needed by waydroid-net.sh
+  boot.kernelModules = [
+    "ip_tables"
+    "iptable_nat"
+    "iptable_filter"
+    "iptable_mangle"
   ];
 
-  # 3. Systemd service to start virgl_test_server automatically on login
+  hardware.graphics.extraPackages = with pkgs; [
+    virglrenderer
+    mesa
+  ];
+
+  networking.nftables.enable = true;
+  networking.firewall.enable = true;
+
   systemd.user.services.virgl-test-server = {
-    description = "Mesa Venus VTest Server for Waydroid";
+    description = "Mesa VirGL Server for Waydroid";
     wantedBy = [ "graphical-session.target" ];
     after = [ "graphical-session.target" ];
     serviceConfig = {
-      ExecStart = "${pkgs.virglrenderer}/bin/virgl_test_server --rendernode /dev/dri/renderD128 --use-venus";
+      ExecStart = "${pkgs.virglrenderer}/bin/virgl_test_server --rendernode /dev/dri/renderD128";
       Restart = "on-failure";
     };
   };

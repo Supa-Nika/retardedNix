@@ -25,6 +25,7 @@
   boot.kernelModules = [
     "v4l2loopback"
     "i2c-dev"
+    "udmabuf"
   ];
 
   boot.extraModprobeConfig = ''
