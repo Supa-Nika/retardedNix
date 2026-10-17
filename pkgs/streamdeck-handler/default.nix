@@ -7,6 +7,7 @@ let
     numpy
     pillow
     pyautogui
+    yt-dlp
   ]);
 
   gstPluginPath = pkgs.lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" [

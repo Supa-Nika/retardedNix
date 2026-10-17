@@ -155,3 +155,24 @@ window-rule {
     default-floating-position x=10 y=10 relative-to="bottom-right"
     open-focused false
 } 
+
+// Keep PiP floating and above fullscreen surfaces
+window-rule {
+    match title="Picture-in-Picture"
+    open-floating true
+    open-focused false
+    // Ensures floating PiP overlays sit above fullscreen windows
+    default-column-width { fixed 480; }
+    default-window-height { fixed 270; }
+}
+
+// Force Gamescope to open as a standard tiled/maximized window, NOT fullscreen
+window-rule {
+    match app-id="gamescope"
+    open-maximized-to-edges true
+}
+
+layer-rule {
+    match namespace="dms-shell" // or app-id="dms-shell"
+    block-out-from "screencast"
+}

@@ -22,9 +22,12 @@
       url = "github:AvengeMedia/dgop";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    musicbot-repo.url = "github:Supa-Nika/MusicBotThingy";
   };
 
-  outputs = { self, nixpkgs, home-manager, dms, dgop, ... }@inputs:
+  # TUTAJ DODAJ musicbot-repo do listy argumentów outputs:
+  outputs = { self, nixpkgs, home-manager, dms, dgop, musicbot-repo, ... }@inputs:
     let
       system = "x86_64-linux";
 
@@ -33,6 +36,8 @@
       # ----------------------------------------------------------------
       hostname = "radzieckaMaszyna";
       username = "mieciu";
+      
+      serverHostname = "radzieckaMaszyna2";
     in
     {
       nixosConfigurations.${hostname} = nixpkgs.lib.nixosSystem {
@@ -40,6 +45,8 @@
         specialArgs = { inherit inputs username hostname; };
         modules = [
           ./hosts/desktop/configuration.nix
+
+          musicbot-repo.nixosModules.musicbot
 
           home-manager.nixosModules.home-manager
           {
@@ -50,6 +57,11 @@
             home-manager.backupFileExtension = "hm-bak";
           }
         ];
+      };
+
+      nixosConfigurations.waydroid-vm = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [ ./hosts/waydroid-vm/configuration.nix ];
       };
     };
 }
