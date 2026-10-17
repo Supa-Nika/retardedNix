@@ -79,7 +79,41 @@
         "type": "github"
       }
     },
+    "musicbot-repo": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1792259897,
+        "narHash": "sha256-aOEgP+Rr8m1QvKBpvwoQY2eQ8QzmsCyekwVxUK5HCAI=",
+        "owner": "Supa-Nika",
+        "repo": "MusicBotThingy",
+        "rev": "b4f2f386ec4ebdc654b22a377810533faa35b1f0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Supa-Nika",
+        "repo": "MusicBotThingy",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
+      "locked": {
+        "lastModified": 1791956154,
+        "narHash": "sha256-jBYGPi4udQ9uo4KQp9m2J0546nJVQitG15gvZSaVVAs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "55bfb4d7437bd4e09ab7cba58a43bd68eb310044",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
       "locked": {
         "lastModified": 1784432872,
         "narHash": "sha256-n3gKTBIV4ZA5VQpUakffBe3KGu4+mhPoA34rrqS0GkA=",
@@ -100,7 +134,8 @@
         "dgop": "dgop",
         "dms": "dms",
         "home-manager": "home-manager",
-        "nixpkgs": "nixpkgs"
+        "musicbot-repo": "musicbot-repo",
+        "nixpkgs": "nixpkgs_2"
       }
     }
   },
