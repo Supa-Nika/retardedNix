@@ -25,7 +25,8 @@
     enableCalendarEvents = false;    # flip on if you use khal
 
     # Use dgop straight from the flake for faster updates.
-    dgop.package = inputs.dgop.packages.${pkgs.stdenv.hostPlatform.system}.default;
+    # forgor
+    # dgop.package = inputs.dgop.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
     settings = lib.importJSON ./dms-shell-modules/settings.json;
 
