@@ -1,23 +1,29 @@
 { config, pkgs, username, ... }:
 
 let
-  qemuFresh = import ../../pkgs/qemu-fresh.nix { inherit pkgs; }; 
+  #qemuFresh = import ../../pkgs/qemu-fresh.nix { inherit pkgs; }; 
 in
 {
   imports = [
     ./hardware-configuration.nix
-    ../../modules/boot.nix
-    ../../modules/nvidia.nix
-    ../../modules/desktop.nix
-    ../../modules/gaming.nix
-    ../../modules/obs.nix
-    ../../modules/networking.nix
-    ../../modules/streamDeck.nix
-    ../../modules/waydroid.nix
-  ];
 
-  time.timeZone = "Europe/Warsaw";
-  i18n.defaultLocale = "en_US.UTF-8";
+    # shared by every machine
+    ../../modules/common/base.nix
+    ../../modules/common/packages.nix
+    ../../modules/common/zerotier.nix
+
+    # desktop-specific
+    ../../modules/desktop/boot.nix
+    ../../modules/desktop/nvidia.nix
+    ../../modules/desktop/desktop.nix
+    ../../modules/desktop/gaming.nix
+    #../../modules/desktop/obs.nix
+    ../../modules/desktop/networking.nix
+    ../../modules/desktop/streamDeck.nix
+    ../../modules/desktop/waydroid.nix
+    ../../modules/desktop/audio-share.nix
+    ../../modules/desktop/nix-store.nix
+  ];
 
   users.users.${username} = {
     isNormalUser = true;
@@ -27,8 +33,6 @@ in
   };
 
   environment.systemPackages = with pkgs; [
-    fastfetch
-    killall
     kitty
     wl-clipboard
     grim
@@ -38,23 +42,16 @@ in
     playerctl
     xdg-utils
     xwayland-satellite
-    vscode
+    #vscode
+    vscodium
     nvitop
-    htop
     protonup-qt
     audacity
     kdePackages.gwenview
     kdePackages.kolourpaint
     kdePackages.ark
     bazaar
-    p7zip
     unrar
-    zip
-    unzip
-    gzip
-    bzip2
-    xz
-    zstd
     python314
     python314Packages.pip
     arduino-cli
@@ -69,10 +66,8 @@ in
     nirius
     yt-dlp
     ffmpeg
-    git
     perl
     beammp-launcher
-    zerotierone
     steam-run
     gamescope
     pavucontrol
@@ -80,9 +75,7 @@ in
     awww
     android-tools
     v4l-utils
-    psmisc
     pulseaudio
-    atuin
     ydotool
     ddcutil
     xwayland
@@ -91,14 +84,18 @@ in
     nodejs_26
     vulkan-tools
     mesa-demos
-    qemuFresh # remember to update later when nixpkgs catches up
+    #qemuFresh # remember to update later when nixpkgs catches up
     piper
     rivalcfg
     kdePackages.kdeconnect-kde
     scrcpy
+    r2modman
+    dotnet-sdk_10
     # gnome-boxes
     
   ];
+
+  fonts.packages = [ pkgs.noto-fonts-cjk-sans ];
 
   # programs.virt-manager.enable = true;
 
@@ -112,6 +109,10 @@ in
   ];
 
   services.flatpak.enable = true;
+
+  programs.appimage.enable = true;
+  programs.appimage.binfmt = true;
+
   services.streamdeck-handler.enable = true;
 
   programs.nix-ld = {
@@ -138,7 +139,6 @@ in
 
   services.udisks2.enable = true;
 
-  nixpkgs.config.allowUnfree = true;
   nixpkgs.config.android_sdk.accept_license = true;
 
   services.pipewire = {
@@ -161,7 +161,22 @@ in
 
   services.ratbagd.enable = true;
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  services.tardbot = {
+    enable = true; #[cite: 5]
+    environmentFile = "/etc/tardbot.env"; # Path to file containing DISCORD_TOKEN=...[cite: 5]
+    modules = [ "music" "general" "r34" "vcmanager" ];     # Optional: specific modules to load[cite: 5]
+    
+    # Optional extra settings / environment variables
+    settings = {
+      INTERLEAVE_MODE = "spread";
+      YTDLP_CLIENTS = "visionos";
+      TEMP_VC_CATEGORY_ID = "1454932444825260262";
+      VC_COMMAND_COOLDOWN = "10";
+    };
+  };
+
+  services.audio-share.enable = true;
+
 
   system.stateVersion = "26.05";
 }

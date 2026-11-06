@@ -3,11 +3,11 @@
     "dank-qml-common": {
       "flake": false,
       "locked": {
-        "lastModified": 1792513666,
-        "narHash": "sha256-RDqPdPrM5lnwRrfFGLz3IwgTjCV2Ie+nrTD3ldj1t/s=",
+        "lastModified": 1793982952,
+        "narHash": "sha256-dffCm8ok1sFxCNYJ6pP6m0mln+TVRtnd5shO7phKSAQ=",
         "owner": "duxlabs-dev",
         "repo": "dux-qml-common",
-        "rev": "ebf5e6c002da1bdaa4aaa2f319fea7b8507abc42",
+        "rev": "b02c0321263372a8c9d18c6648b4608a1865ff90",
         "type": "github"
       },
       "original": {
@@ -23,11 +23,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792524211,
-        "narHash": "sha256-GTDomQTBU132DVjqX/o3cZBo9ylUWLvUJ74PSlahgTo=",
+        "lastModified": 1793890244,
+        "narHash": "sha256-vUj21i43rws9dxBjMxt62M9nCdqVLFGWyXwk0B934Bs=",
         "owner": "AvengeMedia",
         "repo": "dgop",
-        "rev": "43a29526bb651c372c3291eb62c3e0cec3bca6e0",
+        "rev": "963e30cc8604752415819139ace37f696e9caf09",
         "type": "github"
       },
       "original": {
@@ -45,11 +45,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792523829,
-        "narHash": "sha256-hyWdbsyOGXsJxvXG4Tqg0uRI1s3JwPi8DKyWips3Ta8=",
+        "lastModified": 1793983714,
+        "narHash": "sha256-0flUp1R9UTv/00OCvS+54VJXB0LxIvueg6m6UjG/Ego=",
         "owner": "AvengeMedia",
         "repo": "DankMaterialShell",
-        "rev": "9b413296b16721f7679fb62e624cb1ed2433fa58",
+        "rev": "a9a7e1439171ced668ff58d7d6eb010db546f932",
         "type": "github"
       },
       "original": {
@@ -82,11 +82,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1792438572,
-        "narHash": "sha256-5mQQOcggBRBXB7NlzUxO0dbvQN4euJOISjNybrtfxPk=",
+        "lastModified": 1792818383,
+        "narHash": "sha256-199i7ubVSXTMl+0AAlL7cVCXSjcI+jWByMcimYjeMX0=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "24f8f8e786f87d6a818e1746cb2389bf922afdab",
+        "rev": "24f2190587513b9c2f73db112a17844ae912d965",
         "type": "github"
       },
       "original": {
@@ -96,47 +96,13 @@
         "type": "github"
       }
     },
-    "musicbot-repo": {
-      "inputs": {
-        "nixpkgs": "nixpkgs"
-      },
-      "locked": {
-        "lastModified": 1792356208,
-        "narHash": "sha256-7tFDziPfsabFKdI1Iz+cJFtBm4CUrhgCH74pS1Vwvi8=",
-        "owner": "Supa-Nika",
-        "repo": "MusicBotThingy",
-        "rev": "24c0420262d08b51faa2e311ab96f1d6fe3d8f0e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Supa-Nika",
-        "repo": "MusicBotThingy",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1792502884,
-        "narHash": "sha256-IoNisKcGbUjdd45qCqywGMCYmZ5EnkxezvLII0FWwNA=",
+        "lastModified": 1793865203,
+        "narHash": "sha256-/cpdPHaySDIyCgZI6EWngiM6jK3YLUNzv1b7lTzy6Bk=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "02c087f3fe673c9e317f206a627cb6b910336dbe",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1792503283,
-        "narHash": "sha256-vhe2jyvRCgufWPqDuDq1S3t3ypE+ka46IFutV02xKso=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "cd4ea8d57de16f4810bc5f14207bac45fbf19f67",
+        "rev": "c56a87d8e41ce69bd2af57eb35dcc117a9dfca33",
         "type": "github"
       },
       "original": {
@@ -146,13 +112,47 @@
         "type": "github"
       }
     },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1793726008,
+        "narHash": "sha256-jQp1wKvbwWdLBASTXkSi/VYmDJ5AbBi1WvcMt9HWJC8=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "1d060086d60cb76a40cf37109f979d88a5bd6396",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "dgop": "dgop",
         "dms": "dms",
         "home-manager": "home-manager",
-        "musicbot-repo": "musicbot-repo",
+        "nixpkgs": "nixpkgs",
+        "tardbot": "tardbot"
+      }
+    },
+    "tardbot": {
+      "inputs": {
         "nixpkgs": "nixpkgs_2"
+      },
+      "locked": {
+        "lastModified": 1792944872,
+        "narHash": "sha256-edD1IwM27PXWkrKPuq5x+G88usBA9ov83EuP8fpA3EM=",
+        "owner": "Supa-Nika",
+        "repo": "MusicBotThingy",
+        "rev": "86cf122632dda075edfacfdad2b135b9345dd275",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Supa-Nika",
+        "repo": "MusicBotThingy",
+        "type": "github"
       }
     }
   },

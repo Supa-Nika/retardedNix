@@ -2,7 +2,7 @@
 
 let
   cfg = config.services.streamdeck-handler;
-  streamdeck-pkg = pkgs.callPackage ../pkgs/streamdeck-handler { };
+  streamdeck-pkg = pkgs.callPackage ../../pkgs/streamdeck-handler { };
 in
 {
   options.services.streamdeck-handler = {

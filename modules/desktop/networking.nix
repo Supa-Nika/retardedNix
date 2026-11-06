@@ -1,17 +1,9 @@
-{ hostname, ... }:
+{ ... }:
 
+# Desktop-specific networking (static address on enp2s0).
+# Hostname and ZeroTier live in modules/common.
 {
-  networking.hostName = hostname;
   networking.networkmanager.enable = true;
-
-  services.zerotierone = {
-    enable = true;
-    joinNetworks = [
-      "633e31d8a270dc4a"
-    ];
-  };
-
-  networking.firewall.allowedUDPPorts = [ 9993 ];
 
   networking.interfaces.enp2s0.ipv4.addresses = [ {
     address = "192.168.1.69";

@@ -23,11 +23,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    musicbot-repo.url = "github:Supa-Nika/MusicBotThingy";
+    tardbot.url = "github:Supa-Nika/MusicBotThingy";
+
   };
 
   # TUTAJ DODAJ musicbot-repo do listy argumentów outputs:
-  outputs = { self, nixpkgs, home-manager, dms, dgop, musicbot-repo, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, dms, dgop, tardbot, ... }@inputs:
     let
       system = "x86_64-linux";
 
@@ -46,7 +47,7 @@
         modules = [
           ./hosts/desktop/configuration.nix
 
-          musicbot-repo.nixosModules.musicbot
+          tardbot.nixosModules.default
 
           home-manager.nixosModules.home-manager
           {
@@ -54,6 +55,24 @@
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = { inherit inputs username; };
             home-manager.users.${username} = import ./home/home.nix;
+            home-manager.backupFileExtension = "hm-bak";
+          }
+        ];
+      };
+
+      # Headless server (BIOS/GRUB, SATA disk). No desktop or GPU; home-manager is just atuin.
+      nixosConfigurations.${serverHostname} = nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = { inherit inputs username; hostname = serverHostname; };
+        modules = [
+          ./hosts/server/configuration.nix
+
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.extraSpecialArgs = { inherit inputs username; };
+            home-manager.users.${username} = import ./home/server.nix;
             home-manager.backupFileExtension = "hm-bak";
           }
         ];

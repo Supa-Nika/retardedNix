@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 let
-  obs-face-tracker = pkgs.callPackage ../pkgs/obs-face-tracker.nix { };
+  obs-face-tracker = pkgs.callPackage ../../pkgs/obs-face-tracker.nix { };
 in
 {
   programs.obs-studio = {

@@ -1,11 +1,11 @@
 { pkgs }:
 
 pkgs.qemu.overrideAttrs (oldAttrs: rec {
-  version = "11.1.1";
+  version = "11.1.3";
 
   src = pkgs.fetchurl {
     url = "https://download.qemu.org/qemu-${version}.tar.xz";
-    hash = "sha256-B5/7/4pxEbvIkCIQfLq/O7/WFNX8nXzGdZkRlqyhJII=";
+    hash = "sha256-WoKJx5QNx304c8gabCm6Ov4URvydNud/oWWM2+y4SyI=";
   };
 
   # 1. Block QEMU from attempting to fetch packages from PyPI
