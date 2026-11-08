@@ -20,8 +20,9 @@
   # systemd-networkd matches any wired "en*" interface, so the exact
   # interface name doesn't have to be known/hardcoded.
   # ---------------------------------------------------------------------
-  networking.useDHCP = lib.mkDefault true;
+  networking.useDHCP = false;
   networking.networkmanager.enable = true;
+  networking.networkmanager.unmanaged = [ "interface-name:en*" ];
   systemd.network.enable = true;
 
   systemd.network.networks."10-lan" = {
