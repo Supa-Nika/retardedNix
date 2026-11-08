@@ -43,6 +43,12 @@
     };
   };
 
+  networking.firewall = {
+    enable = true;
+    allowPing = true;                 # this is already the default
+    allowedTCPPorts = [ 22 ];         # SSH, add other ports your bot or services need
+  };
+
   # Polish locale details / keymap
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "pl_PL.UTF-8";
