@@ -15,23 +15,32 @@
   boot.loader.grub.device = "/dev/sda";
   boot.loader.grub.useOSProber = true;
 
-  # ---------------------------------------------------------------------
-  # Networking: static 192.168.1.68.
-  # systemd-networkd matches any wired "en*" interface, so the exact
-  # interface name doesn't have to be known/hardcoded.
-  # ---------------------------------------------------------------------
   networking.useDHCP = false;
-  networking.networkmanager.enable = true;
-  networking.networkmanager.unmanaged = [ "interface-name:en*" ];
-  systemd.network.enable = true;
-
-  systemd.network.networks."10-lan" = {
-    matchConfig.Name = "en*";
-    address = [ "192.168.1.68/24" ];
-    gateway = [ "192.168.1.254" ];
-    dns = [ "1.1.1.1" "8.8.8.8" ];
-    networkConfig.DHCP = "no";
-    linkConfig.RequiredForOnline = "routable";
+  networking.networkmanager = {
+    enable = true;
+    ensureProfiles = {
+      environmentFiles = [ "/etc/wifi.env" ];
+      profiles.home-wifi = {
+        connection = {
+          id = "home-wifi";
+          type = "wifi";
+        };
+        wifi = {
+          ssid = "$WIFI_SSID";
+          mode = "infrastructure";
+        };
+        wifi-security = {
+          key-mgmt = "wpa-psk";
+          psk = "$WIFI_PSK";
+        };
+        ipv4 = {
+          method = "manual";
+          address1 = "192.168.1.68/24,192.168.1.1";
+          dns = "192.168.1.1;1.1.1.1;";
+        };
+        ipv6.method = "auto";
+      };
+    };
   };
 
   # Polish locale details / keymap
