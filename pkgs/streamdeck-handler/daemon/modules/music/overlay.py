@@ -20,6 +20,17 @@ W, H = 320, 240
 # ---- tweakables ---------------------------------------------------------
 BACKDROP_ALPHA = 0.55   # strength of the cover-coloured backdrop in overlay mode
 BACKDROP_DARKEN = 0.40  # how much the cover colour is darkened for the backdrop
+BACKDROP_SAT = 1.35     # saturation multiplier for the overlay backdrop tint (1 = unchanged)
+# Colour grading for the full-mode background (applied last, before text/bars are drawn)
+BG_SAT = 1.25           # extra saturation after the glows are added (1 = unchanged)
+BG_CONTRAST = 1.20      # >1 = more contrast around mid-grey (1 = unchanged)
+BG_GAMMA = 1.25         # >1 = deeper mids/shadows, less milky; <1 = brighter (1 = unchanged)
+BG_BRIGHTNESS = 0.0     # additive offset, -1..1 of full range
+# Album cover grading (both modes)
+COVER_SAT = 1.25        # saturation multiplier (1 = unchanged)
+COVER_CONTRAST = 1.15   # >1 = more contrast around mid-grey
+COVER_GAMMA = 1.10      # >1 = deeper mids; <1 = brighter
+COVER_BRIGHTNESS = -0.3  # additive offset, -1..1
 LYRIC_LEAD = 0.25       # show a lyric line slightly early (display latency)
 OV_Y0 = 120             # overlay panel top (px); panel height = H - OV_Y0
 OV_H = H - OV_Y0
@@ -70,6 +81,32 @@ def _fit(draw, text, max_w, size, min_size, bold=False):
     return f, text.rstrip() + "…"
 
 
+def _make_lut(gamma, contrast, brightness):
+    x = np.arange(256, dtype=np.float32) / 255.0
+    x = np.power(x, gamma)
+    x = (x - 0.5) * contrast + 0.5 + brightness
+    return (np.clip(x, 0.0, 1.0) * 255.0 + 0.5).astype(np.uint8)
+
+
+_BG_LUT = _make_lut(BG_GAMMA, BG_CONTRAST, BG_BRIGHTNESS)
+_COVER_LUT = _make_lut(COVER_GAMMA, COVER_CONTRAST, COVER_BRIGHTNESS)
+
+
+def _saturate(img_f, sat):
+    """img_f: float32 BGR (H,W,3). Push colours away from their luminance."""
+    if sat == 1.0:
+        return img_f
+    gray = (img_f[..., 0] * 0.114 + img_f[..., 1] * 0.587 + img_f[..., 2] * 0.299)[..., None]
+    return gray + (img_f - gray) * sat
+
+
+def _boost_rgb(rgb, sat):
+    """Saturate a single (r,g,b) tuple."""
+    r, g, b = rgb
+    gray = 0.299 * r + 0.587 * g + 0.114 * b
+    return tuple(int(np.clip(gray + (c - gray) * sat, 0, 255)) for c in (r, g, b))
+
+
 def _fmt(t):
     t = int(max(t, 0))
     return f"{t // 60}:{t % 60:02d}"
@@ -96,7 +133,13 @@ class _Canvas:
         self.text(xy, s, f, fill, anchor)
 
     def cover(self, cover_bgr, xy, size, radius):
-        rgb = cv2.cvtColor(cv2.resize(cover_bgr, (size, size), interpolation=cv2.INTER_AREA), cv2.COLOR_BGR2RGB)
+        small = cv2.resize(cover_bgr, (size, size), interpolation=cv2.INTER_AREA)
+        small = cv2.LUT(small, _COVER_LUT)
+        if COVER_SAT != 1.0:
+            hsv = cv2.cvtColor(small, cv2.COLOR_BGR2HSV).astype(np.float32)
+            hsv[..., 1] = np.clip(hsv[..., 1] * COVER_SAT, 0, 255)
+            small = cv2.cvtColor(hsv.astype(np.uint8), cv2.COLOR_HSV2BGR)
+        rgb = cv2.cvtColor(small, cv2.COLOR_BGR2RGB)
         pil = Image.fromarray(rgb)
         rm = Image.new("L", (size, size), 0)
         ImageDraw.Draw(rm).rounded_rectangle((0, 0, size - 1, size - 1), radius, fill=255)
@@ -227,7 +270,8 @@ class MusicOverlay:
         return "Nothing playing", ""
 
     def _build_overlay(self, track, pos, idx, connected):
-        tint = tuple(int(c * BACKDROP_DARKEN) for c in (track["color"] if track else (40, 40, 60)))
+        base_col = _boost_rgb(track["color"] if track else (40, 40, 60), BACKDROP_SAT)
+        tint = tuple(int(c * BACKDROP_DARKEN) for c in base_col)
         c = _Canvas(W, OV_H, tint)
         title, artist = self._headline(track, connected)
         x = 10
@@ -323,4 +367,6 @@ class MusicOverlay:
         out = (self._bg * (0.9 + 0.2 * pulse)
                + self._g1 * (0.2 + 0.8 * pulse)
                + self._g2[oy:oy + H, ox:ox + W] * (0.10 + 0.30 * energy))
-        return np.clip(out, 0, 255).astype(np.uint8)
+        out = _saturate(out, BG_SAT)
+        out = np.clip(out, 0, 255).astype(np.uint8)
+        return cv2.LUT(out, _BG_LUT)
