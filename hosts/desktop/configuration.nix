@@ -52,8 +52,6 @@ in
     kdePackages.ark
     bazaar
     unrar
-    python314
-    python314Packages.pip
     arduino-cli
     gcc
     clang
@@ -81,12 +79,10 @@ in
     xwayland
     parted
     xorriso
-    nodejs_26
     vulkan-tools
     mesa-demos
     #qemuFresh # remember to update later when nixpkgs catches up
     piper
-    rivalcfg
     kdePackages.kdeconnect-kde
     scrcpy
     r2modman
@@ -127,14 +123,14 @@ in
   services.udev.packages = [ 
     pkgs.platformio-core
     pkgs.openocd
-    pkgs.rivalcfg
   ];
 
   services.udev.extraRules = ''
     KERNEL=="ttyUSB[0-9]*", MODE="0666", GROUP="dialout"
     KERNEL=="ttyACM[0-9]*", MODE="0666", GROUP="dialout"
     
-    SUBSYSTEM=="usb", ATTR{idVendor}=="1038", MODE="0666"
+    SUBSYSTEM=="usb", ATTRS{idVendor}=="1038", MODE="0660", GROUP="input"
+    KERNEL=="hidraw*", ATTRS{idVendor}=="1038", MODE="0660", GROUP="input"
   '';
 
   services.udisks2.enable = true;
@@ -160,20 +156,6 @@ in
   };
 
   services.ratbagd.enable = true;
-
-  services.tardbot = {
-    enable = true; #[cite: 5]
-    environmentFile = "/etc/tardbot.env"; # Path to file containing DISCORD_TOKEN=...[cite: 5]
-    modules = [ "music" "general" "r34" "vcmanager" ];     # Optional: specific modules to load[cite: 5]
-    
-    # Optional extra settings / environment variables
-    settings = {
-      INTERLEAVE_MODE = "spread";
-      YTDLP_CLIENTS = "visionos";
-      TEMP_VC_CATEGORY_ID = "1454932444825260262";
-      VC_COMMAND_COOLDOWN = "10";
-    };
-  };
 
   services.audio-share.enable = true;
 

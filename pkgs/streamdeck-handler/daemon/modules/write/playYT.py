@@ -13,7 +13,7 @@ def _resolve_youtube_url(youtube_url: str):
         info = ydl.extract_info(youtube_url, download=False)
         return info["url"]
 
-def play(video_path: str, quality: int, fps: int, should_stop=lambda: False):
+def play(video_path: str, quality: int, fps: int, should_stop=lambda: False, overlay=None):
     is_youtube = video_path.startswith("http") and (
         "youtube.com" in video_path or "youtu.be" in video_path
     )
@@ -72,6 +72,9 @@ def play(video_path: str, quality: int, fps: int, should_stop=lambda: False):
                 frame = frame[offset:offset+new_h, :]
 
             frame = cv2.resize(frame, (TARGET_W, TARGET_H))
+
+            if overlay is not None:
+                frame = overlay.render(frame)
 
             # Encode with JPEG quality 30 (smaller payload = zero packet drops)
             _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, quality])

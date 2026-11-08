@@ -20,7 +20,7 @@ let
 in
 pkgs.stdenv.mkDerivation {
   pname = "streamdeck-handler";
-  version = "0.1.0";
+  version = "0.2.0";
 
   src = pkgs.lib.cleanSourceWith {
     src = ./.;
@@ -35,12 +35,19 @@ pkgs.stdenv.mkDerivation {
     # 1. Daemon binary
     makeWrapper ${pythonEnv}/bin/python $out/bin/streamdeck-daemon \
       --add-flags "$out/share/streamdeck-handler/daemon/daemon.py" \
-      --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.ffmpeg pkgs.ydotool ]} \
+      --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.ffmpeg pkgs.ydotool pkgs.pulseaudio ]} \
       --prefix PYTHONPATH : "$out/share/streamdeck-handler/daemon:$out/share/streamdeck-handler" \
-      --set GST_PLUGIN_SYSTEM_PATH_1_0 "${gstPluginPath}"
+      --set GST_PLUGIN_SYSTEM_PATH_1_0 "${gstPluginPath}" \
+      --set STREAMDECK_FONT "${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSans.ttf" \
+      --set STREAMDECK_FONT_BOLD "${pkgs.dejavu_fonts}/share/fonts/truetype/DejaVuSans-Bold.ttf"
 
     # 2. CLI binary
     makeWrapper ${pythonEnv}/bin/python $out/bin/streamdeck-cli \
       --add-flags "$out/share/streamdeck-handler/cli.py"
+
+    # 3. Music debug view (what the overlay sees: API values, position, lyric line)
+    makeWrapper ${pythonEnv}/bin/python $out/bin/streamdeck-music-debug \
+      --add-flags "-m modules.music.debug" \
+      --prefix PYTHONPATH : "$out/share/streamdeck-handler/daemon"
   '';
 }

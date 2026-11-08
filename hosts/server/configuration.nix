@@ -1,4 +1,4 @@
-{ config, pkgs, username, ... }:
+{ config, pkgs, lib, username, ... }:
 
 {
   imports = [
@@ -20,17 +20,9 @@
   # systemd-networkd matches any wired "en*" interface, so the exact
   # interface name doesn't have to be known/hardcoded.
   # ---------------------------------------------------------------------
-  networking.useDHCP = false;
-  networking.networkmanager.enable = false;
+  networking.useDHCP = lib.mkDefault true;
+  networking.networkmanager.enable = true;
   systemd.network.enable = true;
-  systemd.network.networks."10-lan" = {
-    matchConfig.Name = "en*";
-    address = [ "192.168.1.68/24" ];
-    gateway = [ "192.168.1.254" ];
-    dns = [ "1.1.1.1" "8.8.8.8" ];
-    networkConfig.DHCP = "no";
-    linkConfig.RequiredForOnline = "routable";
-  };
 
   # Polish locale details / keymap
   i18n.extraLocaleSettings = {
@@ -54,10 +46,24 @@
   users.users.${username} = {
     isNormalUser = true;
     description = username;
-    extraGroups = [ "wheel" ];
+    extraGroups = [ "wheel" "networkmanager" ];
   };
 
   services.openssh.enable = true;
+
+  services.tardbot = {
+    enable = true; #[cite: 5]
+    environmentFile = "/etc/tardbot.env"; # Path to file containing DISCORD_TOKEN=...[cite: 5]
+    modules = [ "music" "general" "r34" "vcmanager" ];     # Optional: specific modules to load[cite: 5]
+    
+    # Optional extra settings / environment variables
+    settings = {
+      INTERLEAVE_MODE = "spread";
+      YTDLP_CLIENTS = "visionos";
+      TEMP_VC_CATEGORY_ID = "1454932444825260262";
+      VC_COMMAND_COOLDOWN = "10";
+    };
+  };
 
   system.stateVersion = "26.05";
 }

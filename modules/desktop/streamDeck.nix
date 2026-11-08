@@ -7,6 +7,12 @@ in
 {
   options.services.streamdeck-handler = {
     enable = lib.mkEnableOption "Stream Deck ESP32 Daemon";
+
+    pearApiUrl = lib.mkOption {
+      type = lib.types.str;
+      default = "http://127.0.0.1:26538";
+      description = "Pear Desktop API Server URL (used by --display-music / --play-display-music).";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -37,6 +43,7 @@ in
         Environment = [
           "YDOTOOL_SOCKET=/run/ydotool.sock"
           "PYTHONUNBUFFERED=1"
+          "PEAR_API_URL=${cfg.pearApiUrl}"
         ];
       };
     };

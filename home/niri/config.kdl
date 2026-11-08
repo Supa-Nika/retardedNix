@@ -46,6 +46,8 @@ spawn-at-startup "xwayland-satellite"
 
 spawn-at-startup "niriusd"
 
+spawn-at-startup "rivalcfg -C 0000ff -c 0000ff --z2 0000ff --z3 0000ff --z4 0000ff --z5 0000ff --z6 0000ff --z7 0000ff --z8 0000ff --z9 0000ff"
+
 binds {
     // ---- apps -----------------------------------------------------
     Mod+T { spawn "kitty"; }

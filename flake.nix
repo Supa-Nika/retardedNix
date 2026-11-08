@@ -25,10 +25,15 @@
 
     tardbot.url = "github:Supa-Nika/MusicBotThingy";
 
+    rivalcfg-src = {
+      url = "github:flozz/rivalcfg";
+      flake = false;
+    };
+
   };
 
   # TUTAJ DODAJ musicbot-repo do listy argumentów outputs:
-  outputs = { self, nixpkgs, home-manager, dms, dgop, tardbot, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, dms, dgop, tardbot, rivalcfg-src, ... }@inputs:
     let
       system = "x86_64-linux";
 
@@ -47,7 +52,24 @@
         modules = [
           ./hosts/desktop/configuration.nix
 
-          tardbot.nixosModules.default
+          ({ pkgs, ... }: {
+            environment.systemPackages = [
+              (pkgs.python3Packages.buildPythonApplication {
+                pname = "rivalcfg";
+                version = "git";
+                src = rivalcfg-src;
+                pyproject = true;
+                build-system = [ pkgs.python3Packages.flit-core ];
+                dependencies = [ pkgs.python3Packages.hidapi ];
+                doCheck = false;
+              })
+            ];
+
+            services.udev.extraRules = ''
+              SUBSYSTEM=="usb", ATTRS{idVendor}=="1038", TAG+="uaccess"
+              KERNEL=="hidraw*", ATTRS{idVendor}=="1038", TAG+="uaccess"
+            '';
+          })
 
           home-manager.nixosModules.home-manager
           {
@@ -75,6 +97,9 @@
             home-manager.users.${username} = import ./home/server.nix;
             home-manager.backupFileExtension = "hm-bak";
           }
+
+          tardbot.nixosModules.default
+
         ];
       };
 

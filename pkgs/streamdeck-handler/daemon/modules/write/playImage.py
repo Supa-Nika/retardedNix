@@ -1,7 +1,7 @@
 import cv2, os, time, numpy
 from . import sendJpegOverUdp
 
-def play(image_path: str, quality: int, should_stop=lambda: False):
+def play(image_path: str, quality: int, should_stop=lambda: False, overlay=None):
     if not os.path.exists(image_path):
         print(f"[Image] Error: Image file '{image_path}' not found!")
         return
@@ -45,6 +45,20 @@ def play(image_path: str, quality: int, should_stop=lambda: False):
         hsv = cv2.merge([h_chan, s_chan, v_chan])
         frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     
+    if overlay is not None:
+        # Overlay animates (visualiser, progress, lyrics), so stream continuously
+        print("[Image] Displaying image with music overlay over UDP...")
+        delay = 1.0 / 15
+        while not should_stop():
+            t0 = time.monotonic()
+            out = overlay.render(frame)
+            _, jpeg = cv2.imencode('.jpg', out, [cv2.IMWRITE_JPEG_QUALITY, quality])
+            sendJpegOverUdp.send(jpeg.tobytes())
+            sleep_time = delay - (time.monotonic() - t0)
+            if sleep_time > 0:
+                time.sleep(sleep_time)
+        return
+
     # 4. Encode to higher-quality JPEG (Quality 75 for still images)
     _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, quality])
     data = jpeg.tobytes()

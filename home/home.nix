@@ -58,6 +58,7 @@
     qbittorrent
     prismlauncher
     jetbrains.rider
+    pear-desktop
   ];
 
     programs.kitty = {

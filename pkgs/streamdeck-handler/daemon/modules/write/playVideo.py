@@ -1,7 +1,7 @@
 import cv2, time, os
 from . import sendJpegOverUdp
 
-def play(video_path: str, quality: int, fps: int, should_stop=lambda: False):
+def play(video_path: str, quality: int, fps: int, should_stop=lambda: False, overlay=None):
     if not os.path.exists(video_path):
         print(f"[Video] Error: File '{video_path}' not found!")
         return
@@ -48,6 +48,9 @@ def play(video_path: str, quality: int, fps: int, should_stop=lambda: False):
                 frame = frame[offset:offset+new_h, :]
 
             frame = cv2.resize(frame, (TARGET_W, TARGET_H))
+
+            if overlay is not None:
+                frame = overlay.render(frame)
 
             # Encode with JPEG quality 30 (smaller payload = zero packet drops)
             _, jpeg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, quality])

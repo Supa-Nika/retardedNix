@@ -17,29 +17,32 @@ DEFAULT_QUALITY = {
     "image": 100,  # Static image: full quality since it renders once
     "gif": 100,    # GIF: full quality
     "video": 30,  # Video: lower quality for fast UDP streaming
-    "yt": 30
+    "yt": 30,
+    "music": 50   # Now-playing screen: gradients band badly at very low quality
 }
 
 DEFAULT_FPS = {
     "image": 0,
     "gif": 15,
     "video": 20,
-    "yt": 20
+    "yt": 20,
+    "music": 20
 }
 
 # Global state & lock for thread-safe updates
 current_state = {
     "path": "",
-    "type": "image",  # Options: "video", "gif", "image" "yt"
+    "type": "image",  # Options: "video", "gif", "image", "yt", "music"
     "quality": 30,
-    "fps": 0
+    "fps": 0,
+    "overlay": False  # Draw now-playing overlay on top of the media
 }
 state_lock = threading.Lock()
 
 # =========================================================
 # MEDIA PLAYERS 
 # =========================================================
-def is_state_changed(active_path: str, active_type: str, active_quality: int, active_fps: int):
+def is_state_changed(active_path: str, active_type: str, active_quality: int, active_fps: int, active_overlay: bool = False):
     """Returns True if CLI sent new settings or device was unplugged."""
     def check():
         if not os.path.exists(SERIAL_PORT):
@@ -50,40 +53,80 @@ def is_state_changed(active_path: str, active_type: str, active_quality: int, ac
                 current_state["path"] != active_path or
                 current_state["type"] != active_type or
                 current_state["quality"] != active_quality or
-                current_state["fps"] != active_fps
+                current_state["fps"] != active_fps or
+                current_state["overlay"] != active_overlay
             )
     return check
 
-def play_video(file_path, quality, fps):
-    interact.playVideo.play(
-        file_path, 
-        quality=quality, 
-        fps=fps, 
-        should_stop=is_state_changed(file_path, "video", quality, fps)
-    )
+def _make_overlay(enabled: bool, mode: str = "overlay"):
+    """Creates a now-playing overlay (starts the Pear poller + audio analyser)."""
+    if not enabled:
+        return None
+    return interact.musicOverlay.MusicOverlay(mode)
 
-def play_gif(file_path, quality, fps):
-    interact.playGif.play(
-        file_path, 
-        quality=quality, 
-        should_stop=is_state_changed(file_path, "gif", quality, fps)
-    )
+def play_video(file_path, quality, fps, overlay=False):
+    ov = _make_overlay(overlay)
+    try:
+        interact.playVideo.play(
+            file_path, 
+            quality=quality, 
+            fps=fps, 
+            should_stop=is_state_changed(file_path, "video", quality, fps, overlay),
+            overlay=ov
+        )
+    finally:
+        if ov: ov.close()
 
-def play_image(file_path, quality):
+def play_gif(file_path, quality, fps, overlay=False):
+    ov = _make_overlay(overlay)
+    try:
+        interact.playGif.play(
+            file_path, 
+            quality=quality, 
+            should_stop=is_state_changed(file_path, "gif", quality, fps, overlay),
+            overlay=ov
+        )
+    finally:
+        if ov: ov.close()
+
+def play_image(file_path, quality, overlay=False):
     # FPS is ignored for static images
-    interact.playImage.play(
-        file_path, 
-        quality=quality, 
-        should_stop=is_state_changed(file_path, "image", quality, 0)
-    )
+    ov = _make_overlay(overlay)
+    try:
+        interact.playImage.play(
+            file_path, 
+            quality=quality, 
+            should_stop=is_state_changed(file_path, "image", quality, 0, overlay),
+            overlay=ov
+        )
+    finally:
+        if ov: ov.close()
 
-def play_yt(file_path, quality, fps):
-    interact.playYT.play(
-        file_path, 
-        quality=quality, 
-        fps=fps, 
-        should_stop=is_state_changed(file_path, "yt", quality, fps)
-    )
+def play_yt(file_path, quality, fps, overlay=False):
+    ov = _make_overlay(overlay)
+    try:
+        interact.playYT.play(
+            file_path, 
+            quality=quality, 
+            fps=fps, 
+            should_stop=is_state_changed(file_path, "yt", quality, fps, overlay),
+            overlay=ov
+        )
+    finally:
+        if ov: ov.close()
+
+def play_music(quality, fps):
+    """Music-only mode: the overlay IS the picture (reactive cover-art background)."""
+    ov = _make_overlay(True, "full")
+    try:
+        interact.playMusic.play(
+            ov,
+            quality=quality,
+            fps=fps,
+            should_stop=is_state_changed("", "music", quality, fps, False)
+        )
+    finally:
+        ov.close()
 
 
 # =========================================================
@@ -101,6 +144,7 @@ def load_state():
                     current_state["type"] = data.get("type", "image")
                     current_state["quality"] = data.get("quality", 30)
                     current_state["fps"] = data.get("fps", 20)
+                    current_state["overlay"] = bool(data.get("overlay", False))
                 print(f"[State] Loaded from file: {current_state}")
         except Exception as e:
             print(f"[State] Error loading state.json: {e}")
@@ -108,7 +152,7 @@ def load_state():
         print("[State] No previous state file found. Using defaults.")
 
 
-def save_state(path: str, media_type: str, quality: int, fps: int):
+def save_state(path: str, media_type: str, quality: int, fps: int, overlay: bool = False):
     """Persists current playing configuration to state.json."""
     os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
     try:
@@ -117,9 +161,10 @@ def save_state(path: str, media_type: str, quality: int, fps: int):
                 "path": path, 
                 "type": media_type,
                 "quality": quality,
-                "fps": fps
+                "fps": fps,
+                "overlay": overlay
             }, f, indent=2)
-        print(f"[State] Saved to file: {path} ({media_type}, q={quality}, fps={fps})")
+        print(f"[State] Saved to file: {path} ({media_type}, q={quality}, fps={fps}, overlay={overlay})")
     except Exception as e:
         print(f"[State] Failed to write state.json: {e}")
 
@@ -147,20 +192,29 @@ def socket_listener():
             # Inside socket_listener() in daemon.py
             raw_msg = conn.recv(1024).decode('utf-8').strip()
             if raw_msg:
-                parts = raw_msg.split(" ", 3)
-                if len(parts) == 4:
+                # Format: "<type> <quality> <fps> <overlay 0|1> <path>"
+                parts = raw_msg.split(" ", 4)
+                ok = False
+                if len(parts) == 5:
                     media_type = parts[0].lower()
                     
                     try:
                         quality = int(parts[1])
                         fps = int(parts[2])
+                        overlay = parts[3] == "1"
                     except ValueError:
-                        quality, fps = 0, 0
+                        quality, fps, overlay = 0, 0, False
 
-                    path = parts[3]
+                    path = parts[4]
 
-                    path_ok = os.path.exists(path) if media_type != "yt" else path.startswith("http")
-                    if media_type in ["video", "gif", "image", "yt"] and path_ok:
+                    if media_type == "music":
+                        path, overlay, path_ok = "", False, True  # no file; the overlay is the content
+                    elif media_type == "yt":
+                        path_ok = path.startswith("http")
+                    else:
+                        path_ok = os.path.exists(path)
+
+                    if media_type in ["video", "gif", "image", "yt", "music"] and path_ok:
                         # Fallback to type-specific defaults if 0 or invalid
                         resolved_quality = quality if quality > 0 else DEFAULT_QUALITY.get(media_type, 30)
                         resolved_fps = fps if fps > 0 else DEFAULT_FPS.get(media_type, 20)
@@ -170,9 +224,13 @@ def socket_listener():
                             current_state["type"] = media_type
                             current_state["quality"] = resolved_quality
                             current_state["fps"] = resolved_fps
+                            current_state["overlay"] = overlay
 
-                        save_state(path, media_type, resolved_quality, resolved_fps)
+                        save_state(path, media_type, resolved_quality, resolved_fps, overlay)
                         conn.send(b"OK: State updated\n")
+                        ok = True
+                if not ok:
+                    conn.send(b"ERR: invalid command\n")
         except Exception as e:
             print(f"[IPC] Error handling connection: {e}")
         finally:
@@ -215,23 +273,27 @@ def main():
                     media_type = current_state["type"]
                     quality = current_state["quality"]
                     fps = current_state["fps"]
+                    overlay = current_state["overlay"]
 
-                if not path:
-                    time.sleep(0.2)
-                    continue
-                if media_type != "yt" and not os.path.exists(path):
-                    time.sleep(0.2)
-                    continue
+                if media_type != "music":
+                    if not path:
+                        time.sleep(0.2)
+                        continue
+                    if media_type != "yt" and not os.path.exists(path):
+                        time.sleep(0.2)
+                        continue
 
                 # Route execution based on current media type state
                 if media_type == "video":
-                    play_video(path, quality, fps)
+                    play_video(path, quality, fps, overlay)
                 elif media_type == "gif":
-                    play_gif(path, quality, fps)
+                    play_gif(path, quality, fps, overlay)
                 elif media_type == "image":
-                    play_image(path, quality)
+                    play_image(path, quality, overlay)
                 elif media_type == "yt":
-                    play_yt(path, quality, fps)
+                    play_yt(path, quality, fps, overlay)
+                elif media_type == "music":
+                    play_music(quality, fps)
 
             ser.close()
 

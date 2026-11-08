@@ -2,7 +2,7 @@ import cv2, os, time, numpy as np
 from PIL import Image, ImageSequence
 from . import sendJpegOverUdp
 
-def play(gif_path: str, quality: int, should_stop=lambda: False):
+def play(gif_path: str, quality: int, should_stop=lambda: False, overlay=None):
     if not os.path.exists(gif_path):
         print(f"[GIF] Error: File '{gif_path}' not found!")
         return
@@ -71,9 +71,13 @@ def play(gif_path: str, quality: int, should_stop=lambda: False):
         # rounding drift from the contrast/saturation math above.
         cv_frame[alpha == 0] = (0, 0, 0)
 
-        # Encode frame to JPEG
-        _, jpeg = cv2.imencode('.jpg', cv_frame, [cv2.IMWRITE_JPEG_QUALITY, quality])
-        frames.append((jpeg.tobytes(), duration))
+        if overlay is not None:
+            # Keep raw frames: the overlay is rendered per refresh, then encoded
+            frames.append((cv_frame, duration))
+        else:
+            # Encode frame to JPEG
+            _, jpeg = cv2.imencode('.jpg', cv_frame, [cv2.IMWRITE_JPEG_QUALITY, quality])
+            frames.append((jpeg.tobytes(), duration))
 
     pil_gif.close()
 
@@ -82,6 +86,24 @@ def play(gif_path: str, quality: int, should_stop=lambda: False):
         return
 
     print(f"[GIF] Loaded {len(frames)} frames. Starting UDP playback loop...")
+
+    if overlay is not None:
+        # Overlay playback: re-render during long frames so the visualiser keeps moving
+        REFRESH = 1.0 / 20
+        while not should_stop():
+            for raw, duration in frames:
+                end = time.monotonic() + duration
+                while True:
+                    if should_stop():
+                        return
+                    out = overlay.render(raw)
+                    _, jpeg = cv2.imencode('.jpg', out, [cv2.IMWRITE_JPEG_QUALITY, quality])
+                    sendJpegOverUdp.send(jpeg.tobytes())
+                    remain = end - time.monotonic()
+                    if remain <= 0:
+                        break
+                    time.sleep(min(remain, REFRESH))
+        return
 
     # Low-CPU Playback Loop using monotonic clock
     while not should_stop():

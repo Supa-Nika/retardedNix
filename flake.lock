@@ -114,11 +114,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1793726008,
-        "narHash": "sha256-jQp1wKvbwWdLBASTXkSi/VYmDJ5AbBi1WvcMt9HWJC8=",
+        "lastModified": 1793876309,
+        "narHash": "sha256-Wojg9lIH/hDH91iDVH2/EPw8oDSpxjxhXONbU1yf4Zg=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1d060086d60cb76a40cf37109f979d88a5bd6396",
+        "rev": "f9a75f41be3a74eab55d3a7679d34ad6cc0da977",
         "type": "github"
       },
       "original": {
@@ -128,12 +128,29 @@
         "type": "github"
       }
     },
+    "rivalcfg-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1791372211,
+        "narHash": "sha256-L87VTyaPf9mE37AkLONKy58655hH+hA0XMfhEnPxxMs=",
+        "owner": "flozz",
+        "repo": "rivalcfg",
+        "rev": "779ea52c68cbf8d21234d9e0d81718225f680819",
+        "type": "github"
+      },
+      "original": {
+        "owner": "flozz",
+        "repo": "rivalcfg",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "dgop": "dgop",
         "dms": "dms",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
+        "rivalcfg-src": "rivalcfg-src",
         "tardbot": "tardbot"
       }
     },
