@@ -41,8 +41,8 @@
         };
         ipv4 = {
           method = "manual";
-          address1 = "192.168.1.68/24,192.168.1.1";
-          dns = "192.168.1.1;1.1.1.1;";
+          address1 = "192.168.1.68/24,192.168.1.254";
+          dns = "192.168.1.254;1.1.1.1;";
         };
         ipv6.method = "auto";
       };
@@ -83,10 +83,10 @@
   services.openssh.enable = true;
 
   services.tardbot = {
-    enable = true; #[cite: 5]
-    environmentFile = "/etc/tardbot.env"; # Path to file containing DISCORD_TOKEN=...[cite: 5]
-    modules = [ "music" "general" "r34" "vcmanager" ];     # Optional: specific modules to load[cite: 5]
-    
+    enable = true;
+    environmentFile = "/etc/tardbot.env"; # Path to file containing DISCORD_TOKEN=...
+    modules = [ "music" "general" "r34" "vcmanager" ];
+
     # Optional extra settings / environment variables
     settings = {
       INTERLEAVE_MODE = "spread";
