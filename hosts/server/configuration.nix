@@ -24,6 +24,15 @@
   networking.networkmanager.enable = true;
   systemd.network.enable = true;
 
+  systemd.network.networks."10-lan" = {
+    matchConfig.Name = "en*";
+    address = [ "192.168.1.68/24" ];
+    gateway = [ "192.168.1.254" ];
+    dns = [ "1.1.1.1" "8.8.8.8" ];
+    networkConfig.DHCP = "no";
+    linkConfig.RequiredForOnline = "routable";
+  };
+
   # Polish locale details / keymap
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "pl_PL.UTF-8";
