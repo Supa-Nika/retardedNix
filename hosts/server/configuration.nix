@@ -96,5 +96,7 @@
     };
   };
 
+  fonts.packages = [ pkgs.noto-fonts-cjk-sans ];
+
   system.stateVersion = "26.05";
 }

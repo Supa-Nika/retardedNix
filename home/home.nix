@@ -59,6 +59,7 @@
     prismlauncher
     jetbrains.rider
     pear-desktop
+    deadlock-mod-manager
   ];
 
     programs.kitty = {

@@ -4,8 +4,8 @@ import subprocess
 
 KEYCODES = {
     '1': 164,  # KEY_PLAYPAUSE
-    '2': 163,  # KEY_NEXTSONG
-    '3': 165,  # KEY_PREVIOUSSONG
+    '2': 165,  # KEY_PREVIOUSSONG
+    '3': 163,  # KEY_NEXTSONG
     '4': 166,  # KEY_STOPCD
     '5': 113,  # KEY_MUTE
     '6': 114,  # KEY_VOLUMEDOWN
