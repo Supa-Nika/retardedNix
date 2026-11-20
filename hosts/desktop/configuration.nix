@@ -88,7 +88,7 @@ in
     r2modman
     dotnet-sdk_10
     # gnome-boxes
-    
+    virtualboxKvm
   ];
 
   fonts.packages = [ pkgs.noto-fonts-cjk-sans ];

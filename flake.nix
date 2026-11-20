@@ -5,6 +5,9 @@
     # niri (native nixpkgs module) needs a fairly recent nixpkgs.
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
+    nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
+
+
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -30,10 +33,12 @@
       flake = false;
     };
 
+    grimoire.url = "github:Slush97/grimoire/stable";
+
   };
 
   # TUTAJ DODAJ musicbot-repo do listy argumentów outputs:
-  outputs = { self, nixpkgs, home-manager, dms, dgop, tardbot, rivalcfg-src, ... }@inputs:
+  outputs = { self, nixpkgs, nix-cachyos-kernel, home-manager, dms, dgop, tardbot, rivalcfg-src, grimoire, ... }@inputs:
     let
       system = "x86_64-linux";
 
@@ -52,8 +57,16 @@
         modules = [
           ./hosts/desktop/configuration.nix
 
+          ({ ... }: {
+            boot.kernelPackages =
+              nix-cachyos-kernel.legacyPackages.x86_64-linux.linuxPackages-cachyos-latest;
+          })
+
           ({ pkgs, ... }: {
+            nixpkgs.overlays = [ grimoire.overlays.default ];
+
             environment.systemPackages = [
+              pkgs.grimoire
               (pkgs.python3Packages.buildPythonApplication {
                 pname = "rivalcfg";
                 version = "git";
