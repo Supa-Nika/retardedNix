@@ -30,10 +30,11 @@
       flake = false;
     };
 
+    # Deadlock mod manager (if "stable" doesn't exist, use "github:Slush97/grimoire")
+    grimoire.url = "github:Slush97/grimoire/stable";
   };
 
-  # TUTAJ DODAJ musicbot-repo do listy argumentów outputs:
-  outputs = { self, nixpkgs, home-manager, dms, dgop, tardbot, rivalcfg-src, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, dms, dgop, tardbot, rivalcfg-src, grimoire, ... }@inputs:
     let
       system = "x86_64-linux";
 
@@ -42,7 +43,7 @@
       # ----------------------------------------------------------------
       hostname = "radzieckaMaszyna";
       username = "mieciu";
-      
+
       serverHostname = "radzieckaMaszyna2";
     in
     {
@@ -53,7 +54,10 @@
           ./hosts/desktop/configuration.nix
 
           ({ pkgs, ... }: {
+            nixpkgs.overlays = [ grimoire.overlays.default ];
+
             environment.systemPackages = [
+              pkgs.grimoire
               (pkgs.python3Packages.buildPythonApplication {
                 pname = "rivalcfg";
                 version = "git";
@@ -79,6 +83,8 @@
             home-manager.users.${username} = import ./home/home.nix;
             home-manager.backupFileExtension = "hm-bak";
           }
+
+          tardbot.nixosModules.default
         ];
       };
 

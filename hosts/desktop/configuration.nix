@@ -160,5 +160,19 @@ in
   services.audio-share.enable = true;
 
 
+  services.tardbot = {
+    enable = true;
+    environmentFile = "/etc/tardbot.env"; # Path to file containing DISCORD_TOKEN=...
+    modules = [ "music" "general" "r34" "vcmanager" "tardAI"];
+
+    # Optional extra settings / environment variables
+    settings = {
+      INTERLEAVE_MODE = "spread";
+      YTDLP_CLIENTS = "visionos";
+      TEMP_VC_CATEGORY_ID = "1454932444825260262";
+      VC_COMMAND_COOLDOWN = "10";
+    };
+  };
+
   system.stateVersion = "26.05";
 }
